@@ -17,7 +17,7 @@
             android:id="@+id/title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="5dp"
             android:textAlignment="center"
             android:textSize="14pt" />
 
@@ -25,9 +25,9 @@
             android:id="@+id/date_started"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="10dp"
             android:textAlignment="center"
-            android:textSize="8pt" />
+            android:textSize="6pt" />
 
         <Button
             android:id="@+id/add_route"
@@ -41,7 +41,7 @@
             android:id="@+id/finish"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="10dp"
             android:text="@string/finish"
             android:textAlignment="center" />
 
