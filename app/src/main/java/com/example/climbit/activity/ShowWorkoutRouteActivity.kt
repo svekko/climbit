@@ -237,7 +237,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         photoFile?.also { f ->
             val uri = FileProvider.getUriForFile(this, "com.example.android.fileprovider", f)
 
-            findViewById<Button>(R.id.take_photo).setOnClickListener {
+            findViewById<ImageButton>(R.id.take_photo).setOnClickListener {
                 takePhotoLauncher?.also { launcher ->
                     launcher.launch(uri)
                 }
@@ -314,7 +314,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
                     // Can not modify if workout is finished or workout route has been marked complete.
                     if (isFinished) {
-                        findViewById<Button>(R.id.take_photo).visibility = View.GONE
+                        findViewById<ImageButton>(R.id.take_photo).visibility = View.GONE
                         findViewById<Button>(R.id.add_attempt).visibility = View.GONE
                         findViewById<Button>(R.id.route_completed).visibility = View.GONE
                     }
