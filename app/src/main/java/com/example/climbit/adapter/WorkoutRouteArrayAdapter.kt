@@ -43,7 +43,7 @@ class WorkoutRouteArrayAdapter(act: BaseActivity, finished: Boolean, list: List<
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         routes.getOrNull(position)?.also { route ->
             val title = route.workoutRoute.name
-            var subtitle = String.format(activity.getString(R.string.n_attempts, route.sets.size))
+            var subtitle = activity.resources.getQuantityString(R.plurals.n_attempts, route.sets.size, route.sets.size)
 
             for (set in route.sets) {
                 if (set.finished) {

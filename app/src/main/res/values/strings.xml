@@ -30,5 +30,8 @@
     <string name="load_more">Load more</string>
     <string name="rest_timer">Rest timer</string>
     <string name="set_n">Set #%1$d</string>
-    <string name="n_attempts">%1$d attempts</string>
+    <plurals name="n_attempts">
+        <item quantity="one">%1$d attempt</item>
+        <item quantity="other">%1$d attempts</item>
+    </plurals>
 </resources>
