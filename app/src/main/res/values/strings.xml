@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">ClimbIt</string>
+    <string name="title">Title</string>
+    <string name="description">Description</string>
+    <string name="start_workout">Start a workout</string>
+    <string name="continue_workout">Continue workout</string>
+    <string name="list_workouts">List workouts</string>
+    <string name="next">Next</string>
+    <string name="early_morning_workout">Early morning workout</string>
+    <string name="lunchtime_workout">Lunchtime workout</string>
+    <string name="nighttime_workout">Nighttime workout</string>
+    <string name="late_night_workout">Late night workout</string>
+    <string name="add_route">Add a route</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="name">Name</string>
+    <string name="confirm_your_action">Confirm your action</string>
+    <string name="close">Close</string>
+    <string name="remove">Remove</string>
+    <string name="image">Image</string>
+    <string name="take_photo">Take photo</string>
+    <string name="add_attempt">Add attempt</string>
+    <string name="complete">Complete</string>
+    <string name="completed">Completed</string>
+    <string name="finish">Finish</string>
+    <string name="delete">Delete</string>
+    <string name="flash">Flash</string>
+    <string name="home">Home</string>
+    <string name="load_more">Load more</string>
+    <string name="rest_timer">Rest timer</string>
+    <string name="set_n">Set #%1$d</string>
+    <string name="n_attempts">%1$d attempts</string>
+</resources>
