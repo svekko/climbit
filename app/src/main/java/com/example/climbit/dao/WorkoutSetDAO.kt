@@ -10,6 +10,15 @@ interface WorkoutSetDAO {
     @Query("SELECT * FROM workout_set WHERE workout_route_id = :routeID ORDER BY date_in DESC")
     fun getAll(routeID: Long): List<WorkoutSet>
 
+    @Query(
+        "SELECT workout_set.* FROM workout_set " +
+                "JOIN workout_route " +
+                "ON workout_route.id = workout_set.workout_route_id " +
+                "AND workout_route.workout_id = :workoutID " +
+                "ORDER BY workout_set.date_in DESC LIMIT 1"
+    )
+    fun getLastForWorkout(workoutID: Long): WorkoutSet?
+
     @Query("SELECT * FROM workout_set WHERE id = :id")
     fun get(id: Long): WorkoutSet
 

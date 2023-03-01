@@ -279,6 +279,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                 val sets = db.workoutSetDAO().getAll(it)
                 val route = db.workoutRouteDAO().get(it)
                 val workout = db.workoutDAO().get(route.workoutID)
+                val lastSet = db.workoutSetDAO().getLastForWorkout(route.workoutID)
                 val difficulty = db.difficultyDAO().get(route.difficultyID)
                 val workoutFinished = workout.dateFinished != null
 
@@ -290,21 +291,20 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
                 runOnUiThread {
                     // Update rest timer every second.
-                    if (sets.isNotEmpty() && !isFinished) {
-                        handler?.also {
-                            it.removeCallbacksAndMessages(null)
-                        }
+                    lastSet?.also { set ->
+                        if (!isFinished) {
+                            handler?.also {
+                                it.removeCallbacksAndMessages(null)
+                            }
 
-                        handler = Handler(mainLooper).also {
-                            it.post(object : Runnable {
-                                override fun run() {
-                                    sets.firstOrNull()?.also { set ->
+                            handler = Handler(mainLooper).also {
+                                it.post(object : Runnable {
+                                    override fun run() {
                                         showRestTimer(set)
+                                        it.postDelayed(this, 1000)
                                     }
-
-                                    it.postDelayed(this, 1000)
-                                }
-                            })
+                                })
+                            }
                         }
                     }
 
