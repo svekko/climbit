@@ -30,12 +30,12 @@ abstract class Database : RoomDatabase() {
 
     fun afterBuild() {
         if (difficultyDAO().getAll().isEmpty()) {
-            difficultyDAO().insert(Difficulty(1, "Beginner", "1ee317"))
-            difficultyDAO().insert(Difficulty(2, "Easy", "e3d217"))
-            difficultyDAO().insert(Difficulty(3, "Intermediate", "e31717"))
-            difficultyDAO().insert(Difficulty(4, "Advanced", "1736e3"))
-            difficultyDAO().insert(Difficulty(5, "Expert", "c817e3"))
-            difficultyDAO().insert(Difficulty(6, "Elite", "ffffff"))
+            difficultyDAO().insert(Difficulty(1, "Beginner", "5ddf77"))
+            difficultyDAO().insert(Difficulty(2, "Easy", "f0e570"))
+            difficultyDAO().insert(Difficulty(3, "Intermediate", "e66b6b"))
+            difficultyDAO().insert(Difficulty(4, "Advanced", "6baae6"))
+            difficultyDAO().insert(Difficulty(5, "Expert", "dd8dec"))
+            difficultyDAO().insert(Difficulty(6, "Elite", "a3a3a3"))
         }
     }
 }

@@ -324,7 +324,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                     }
 
                     findViewById<TextView>(R.id.difficulty).also { v ->
-                        v.text = difficulty.name
+                        v.text = "${difficulty.name} ${getString(R.string.difficulty).lowercase()}"
                         v.setTextColor(Color.parseColor("#${difficulty.hexColor}"))
                     }
                 }

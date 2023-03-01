@@ -58,7 +58,7 @@ class WorkoutRouteArrayAdapter(act: BaseActivity, finished: Boolean, list: List<
 
             holder.titleView.text = title
             holder.titleView.setTextColor(Color.parseColor("#${route.difficulty.hexColor}"))
-            holder.subtitleView.text = "${route.difficulty.name}. $subtitle"
+            holder.subtitleView.text = "${route.difficulty.name} ${activity.getString(R.string.difficulty).lowercase()}. $subtitle"
 
             holder.itemView.setOnClickListener {
                 val intent = Intent(activity, ShowWorkoutRouteActivity::class.java)

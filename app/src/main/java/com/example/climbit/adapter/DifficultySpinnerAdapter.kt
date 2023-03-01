@@ -12,11 +12,13 @@ class DifficultySpinnerAdapter(ctx: Context, rows: List<Difficulty>) : ArrayAdap
     private fun colorifyDifficulty(position: Int, view: View) {
         getItem(position)?.also { difficulty ->
             (view as? AppCompatCheckedTextView)?.also {
-                it.setTextColor(Color.parseColor("#${difficulty.hexColor}"))
-
                 if (difficulty.id == 0L) {
-                    it.alpha = 0.5F
+                    it.alpha = 0.45F
+                } else {
+                    it.setTextColor(Color.parseColor("#${difficulty.hexColor}"))
                 }
+
+                it.textSize = 17.0F
             }
         }
     }

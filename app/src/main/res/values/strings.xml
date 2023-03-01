@@ -29,6 +29,7 @@
     <string name="home">Home</string>
     <string name="load_more">Load more</string>
     <string name="rest_timer">Rest timer</string>
+    <string name="difficulty">Difficulty</string>
     <string name="select_difficulty">Select difficulty</string>
     <string name="set_n">Set #%1$d</string>
     <plurals name="n_attempts">
