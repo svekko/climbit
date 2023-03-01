@@ -295,7 +295,10 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                 runOnUiThread {
                     // Update rest timer every second.
                     lastSet?.also { set ->
-                        if (!isFinished) {
+                        if (isFinished) {
+                            findViewById<TextView>(R.id.timer).visibility = View.GONE
+                            findViewById<TextView>(R.id.timer_title).visibility = View.GONE
+                        } else {
                             handler?.also {
                                 it.removeCallbacksAndMessages(null)
                             }
