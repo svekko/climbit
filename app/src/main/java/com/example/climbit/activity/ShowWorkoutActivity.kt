@@ -3,11 +3,15 @@ package com.example.climbit.activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.*
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Spinner
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.example.climbit.App
 import com.example.climbit.R
+import com.example.climbit.adapter.DifficultySpinnerAdapter
 import com.example.climbit.adapter.WorkoutRouteArrayAdapter
 import com.example.climbit.model.Difficulty
 import com.example.climbit.model.Workout
@@ -74,12 +78,13 @@ class ShowWorkoutActivity : BaseActivity() {
 
     private fun addRoute(view: View) {
         Executors.newSingleThreadExecutor().execute {
-            val difficulties = App.getDB(this).difficultyDAO().getAll()
+            val difficulties = App.getDB(this).difficultyDAO().getAll().toMutableList()
+            difficulties.add(0, Difficulty(0, getString(R.string.select_difficulty), "FFFFFF"))
 
             runOnUiThread {
                 val builder = AlertDialog.Builder(this)
                 val dialogView = layoutInflater.inflate(R.layout.dialog_add_route, null, false)
-                val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, difficulties)
+                val adapter = DifficultySpinnerAdapter(this, difficulties)
 
                 val difficultySpinner = dialogView.findViewById<Spinner>(R.id.difficulty)
                 difficultySpinner.adapter = adapter
@@ -95,6 +100,11 @@ class ShowWorkoutActivity : BaseActivity() {
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                         val difficulty = (difficultySpinner.selectedItem as? Difficulty) ?: run {
                             alertError("invalid difficulty")
+                            return@setOnClickListener
+                        }
+
+                        if (difficulty.id < 1) {
+                            alertError("difficulty must be selected")
                             return@setOnClickListener
                         }
 
