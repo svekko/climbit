@@ -56,9 +56,16 @@ class WorkoutRouteArrayAdapter(act: BaseActivity, finished: Boolean, list: List<
                 holder.deleteButton.visibility = View.GONE
             }
 
+            var difficulty = "${route.difficulty.name} ${activity.getString(R.string.difficulty).lowercase()}"
+
+            // Grade is not mandatory.
+            route.grade?.also {
+                difficulty = "$difficulty (${it.fontScale})"
+            }
+
             holder.titleView.text = title
             holder.titleView.setTextColor(Color.parseColor("#${route.difficulty.hexColor}"))
-            holder.subtitleView.text = "${route.difficulty.name} ${activity.getString(R.string.difficulty).lowercase()}\n${subtitle}"
+            holder.subtitleView.text = "${difficulty}\n${subtitle}"
 
             holder.itemView.setOnClickListener {
                 val intent = Intent(activity, ShowWorkoutRouteActivity::class.java)

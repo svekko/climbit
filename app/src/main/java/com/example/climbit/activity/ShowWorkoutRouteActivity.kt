@@ -285,6 +285,9 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                 val lastSet = db.workoutSetDAO().getLastForWorkout(route.workoutID)
                 val difficulty = db.difficultyDAO().get(route.difficultyID)
                 val workoutFinished = workout.dateFinished != null
+                val grade = route.gradeID?.let {
+                    db.gradeDAO().get(it)
+                }
 
                 workoutID = route.workoutID
 
@@ -329,8 +332,15 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                         v.text = route.name
                     }
 
+                    var difficultyText = "${difficulty.name} ${getString(R.string.difficulty).lowercase()}"
+
+                    // Grade is not mandatory.
+                    grade?.also { grade ->
+                        difficultyText = "$difficultyText (${grade.fontScale})"
+                    }
+
                     findViewById<TextView>(R.id.difficulty).also { v ->
-                        v.text = "${difficulty.name} ${getString(R.string.difficulty).lowercase()}"
+                        v.text = difficultyText
                         v.setTextColor(Color.parseColor("#${difficulty.hexColor}"))
                     }
                 }

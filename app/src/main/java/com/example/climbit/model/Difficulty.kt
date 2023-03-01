@@ -4,9 +4,11 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity
+@Entity(
+    tableName = "difficulty"
+)
 data class Difficulty(
-    @PrimaryKey()
+    @PrimaryKey
     val id: Long,
 
     @ColumnInfo(name = "name")

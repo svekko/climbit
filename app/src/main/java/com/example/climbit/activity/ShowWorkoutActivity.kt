@@ -3,10 +3,7 @@ package com.example.climbit.activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Spinner
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.example.climbit.App
@@ -14,6 +11,7 @@ import com.example.climbit.R
 import com.example.climbit.adapter.DifficultySpinnerAdapter
 import com.example.climbit.adapter.WorkoutRouteArrayAdapter
 import com.example.climbit.model.Difficulty
+import com.example.climbit.model.Grade
 import com.example.climbit.model.Workout
 import com.example.climbit.model.WorkoutRoute
 import com.example.climbit.util.TimeUtil
@@ -81,13 +79,35 @@ class ShowWorkoutActivity : BaseActivity() {
             val difficulties = App.getDB(this).difficultyDAO().getAll().toMutableList()
             difficulties.add(0, Difficulty(0, getString(R.string.select_difficulty), "FFFFFF"))
 
+            val grades = App.getDB(this).gradeDAO().getAll().toMutableList()
+            grades.add(0, Grade(0, 0, getString(R.string.unknown_grade)))
+
             runOnUiThread {
                 val builder = AlertDialog.Builder(this)
                 val dialogView = layoutInflater.inflate(R.layout.dialog_add_route, null, false)
-                val adapter = DifficultySpinnerAdapter(this, difficulties)
 
+                val difficultyAdapter = DifficultySpinnerAdapter(this, difficulties)
                 val difficultySpinner = dialogView.findViewById<Spinner>(R.id.difficulty)
-                difficultySpinner.adapter = adapter
+                difficultySpinner.adapter = difficultyAdapter
+
+                val gradeAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, grades)
+                val gradeSpinner = dialogView.findViewById<Spinner>(R.id.grade)
+                gradeSpinner.adapter = gradeAdapter
+
+                // Show difficulty only if grade has not been selected.
+                gradeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                    override fun onNothingSelected(parent: AdapterView<*>?) {
+                        difficultySpinner.visibility = View.VISIBLE
+                    }
+
+                    override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                        difficultySpinner.visibility = if (position > 0) {
+                            View.GONE
+                        } else {
+                            View.VISIBLE
+                        }
+                    }
+                }
 
                 builder.setMessage(R.string.add_route)
                 builder.setView(dialogView)
@@ -98,12 +118,26 @@ class ShowWorkoutActivity : BaseActivity() {
 
                 dialog.setOnShowListener {
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val grade = (gradeSpinner.selectedItem as? Grade) ?: run {
+                            alertError("invalid grade")
+                            return@setOnClickListener
+                        }
+
                         val difficulty = (difficultySpinner.selectedItem as? Difficulty) ?: run {
                             alertError("invalid difficulty")
                             return@setOnClickListener
                         }
 
-                        if (difficulty.id < 1) {
+                        var gradeID: Long? = null
+                        var difficultyID = difficulty.id
+
+                        // If selected, then grade selection overrides difficulty.
+                        if (grade.id > 0) {
+                            difficultyID = grade.difficultyID
+                            gradeID = grade.id
+                        }
+
+                        if (difficultyID < 1) {
                             alertError("difficulty must be selected")
                             return@setOnClickListener
                         }
@@ -117,7 +151,7 @@ class ShowWorkoutActivity : BaseActivity() {
 
                         workoutID?.also {
                             Executors.newSingleThreadExecutor().execute {
-                                val route = WorkoutRoute(0, name, Date(), it, difficulty.id)
+                                val route = WorkoutRoute(0, name, Date(), it, difficultyID, gradeID)
                                 val id = App.getDB(this).workoutRouteDAO().insert(route)
 
                                 runOnUiThread {

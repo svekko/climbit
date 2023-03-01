@@ -17,6 +17,14 @@
         android:inputType="text|textCapSentences" />
 
     <Spinner
+        android:id="@+id/grade"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/input"
+        android:padding="5dp" />
+
+    <Spinner
         android:id="@+id/difficulty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -21,6 +21,12 @@ import java.util.*
             parentColumns = ["id"],
             onDelete = ForeignKey.CASCADE,
         ),
+        ForeignKey(
+            entity = Grade::class,
+            childColumns = ["grade_id"],
+            parentColumns = ["id"],
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
 )
 data class WorkoutRoute(
@@ -38,4 +44,7 @@ data class WorkoutRoute(
 
     @ColumnInfo(name = "difficulty_id")
     val difficultyID: Long,
+
+    @ColumnInfo(name = "grade_id")
+    val gradeID: Long?,
 )

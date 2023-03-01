@@ -18,4 +18,10 @@ data class WorkoutRouteWithSets(
         entityColumn = "id"
     )
     val difficulty: Difficulty,
+
+    @Relation(
+        parentColumn = "grade_id",
+        entityColumn = "id"
+    )
+    val grade: Grade?,
 )
