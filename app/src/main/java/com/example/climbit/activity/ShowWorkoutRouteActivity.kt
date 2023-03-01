@@ -257,18 +257,21 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
     private fun showRestTimer(lastSet: WorkoutSet) {
         val diff = Date().time - lastSet.dateIn.time
+        val timer = findViewById<TextView>(R.id.timer)
+        val timerTitle = findViewById<TextView>(R.id.timer_title)
 
-        findViewById<TextView>(R.id.timer).also { timer ->
-            if (diff >= (60 * 60 * 1000)) {
-                timer.visibility = View.INVISIBLE
-                return
-            }
-
-            val dur = Date(diff)
-            val text = "${getString(R.string.rest_timer)}: ${DateFormat.format("mm:ss", dur)}"
-
-            timer.text = text
+        if (diff >= (60 * 60 * 1000)) {
+            timer.visibility = View.GONE
+            timerTitle.visibility = View.GONE
+            return
         }
+
+        val dur = Date(diff)
+        val text = DateFormat.format("mm:ss", dur)
+        val titleText = "${getString(R.string.rest_timer)}:"
+
+        timer.text = text
+        timerTitle.text = titleText
     }
 
     @SuppressLint("SetTextI18n")
