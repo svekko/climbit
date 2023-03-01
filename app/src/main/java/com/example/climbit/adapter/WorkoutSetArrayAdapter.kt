@@ -45,7 +45,7 @@ class WorkoutSetArrayAdapter(act: BaseActivity, finished: Boolean, list: List<Wo
             }
 
             if (workoutFinished) {
-                holder.deleteButton.visibility = View.GONE
+                holder.deleteButton.visibility = View.INVISIBLE
             }
 
             holder.titleView.text = title

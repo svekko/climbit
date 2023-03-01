@@ -53,7 +53,7 @@ class WorkoutRouteArrayAdapter(act: BaseActivity, finished: Boolean, list: List<
             }
 
             if (workoutFinished) {
-                holder.deleteButton.visibility = View.GONE
+                holder.deleteButton.visibility = View.INVISIBLE
             }
 
             var difficulty = "${route.difficulty.name} ${activity.getString(R.string.difficulty).lowercase()}"
