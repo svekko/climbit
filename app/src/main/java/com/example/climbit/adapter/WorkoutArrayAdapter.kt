@@ -45,8 +45,10 @@ class WorkoutArrayAdapter(act: BaseActivity, list: ArrayList<Workout>) : Recycle
         workouts.getOrNull(position)?.also { workout ->
             var dateStartFinish = TimeUtil.formatDatetime(workout.dateStarted).toString()
 
-            workout.dateFinished?.also {
+            workout.dateFinished?.let {
                 dateStartFinish += " - ${TimeUtil.formatDatetime(it)}"
+            } ?: run {
+                dateStartFinish += " - ..."
             }
 
             holder.titleView.text = workout.title
