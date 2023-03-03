@@ -10,10 +10,7 @@ import com.example.climbit.App
 import com.example.climbit.R
 import com.example.climbit.adapter.DifficultySpinnerAdapter
 import com.example.climbit.adapter.WorkoutRouteArrayAdapter
-import com.example.climbit.model.Difficulty
-import com.example.climbit.model.Grade
-import com.example.climbit.model.Workout
-import com.example.climbit.model.WorkoutRoute
+import com.example.climbit.model.*
 import com.example.climbit.util.TimeUtil
 import java.util.*
 import java.util.concurrent.Executors
@@ -21,6 +18,7 @@ import java.util.concurrent.Executors
 class ShowWorkoutActivity : BaseActivity() {
     var workoutID: Long? = null
     var workout: Workout? = null
+    var routes: List<WorkoutRouteWithSets>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,21 +34,23 @@ class ShowWorkoutActivity : BaseActivity() {
 
         workoutID?.also {
             Executors.newSingleThreadExecutor().execute {
-                workout = App.getDB(this).workoutDAO().get(it).also {
-                    val routes = App.getDB(this).workoutRouteDAO().getRoutesAndSets(it.id)
+                workout = App.getDB(this).workoutDAO().get(it).also { workout ->
+                    routes = App.getDB(this).workoutRouteDAO().getRoutesAndSets(workout.id)
 
                     runOnUiThread {
-                        findViewById<TextView>(R.id.title).text = it.title
-                        findViewById<TextView>(R.id.date_started).text = TimeUtil.formatDatetime(it.dateStarted)
+                        findViewById<TextView>(R.id.title).text = workout.title
+                        findViewById<TextView>(R.id.date_started).text = TimeUtil.formatDatetime(workout.dateStarted)
 
-                        it.dateFinished?.also {
+                        workout.dateFinished?.also {
                             findViewById<Button>(R.id.add_route).visibility = View.GONE
                             findViewById<Button>(R.id.finish).visibility = View.GONE
                         }
 
-                        val adapter = WorkoutRouteArrayAdapter(this, it.dateFinished != null, routes)
-                        val list = findViewById<RecyclerView>(R.id.routes_list)
-                        list.adapter = adapter
+                        routes?.also { routes ->
+                            val adapter = WorkoutRouteArrayAdapter(this, workout.dateFinished != null, routes)
+                            val list = findViewById<RecyclerView>(R.id.routes_list)
+                            list.adapter = adapter
+                        }
                     }
                 }
             }
@@ -142,11 +142,18 @@ class ShowWorkoutActivity : BaseActivity() {
                             return@setOnClickListener
                         }
 
-                        val name = dialogView.findViewById<EditText>(R.id.name).text.toString().also {
-                            if (it.isEmpty()) {
-                                alertError("name is empty")
-                                return@setOnClickListener
+                        val name = dialogView.findViewById<EditText>(R.id.name).text.toString().let {
+                            var out = it
+
+                            if (out.isEmpty()) {
+                                out = getString(R.string.route)
+
+                                routes?.let { routes ->
+                                    out = "$out #${routes.size + 1}"
+                                }
                             }
+
+                            out
                         }
 
                         workoutID?.also {

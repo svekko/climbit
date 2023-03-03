@@ -18,6 +18,7 @@
     <string name="close">Close</string>
     <string name="remove">Remove</string>
     <string name="image">Image</string>
+    <string name="route">Route</string>
     <string name="take_photo">Take photo</string>
     <string name="add_attempt">Add attempt</string>
     <string name="done_final_add_attempt">Done, add final attempt</string>
