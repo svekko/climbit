@@ -151,6 +151,8 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                     photos.removeAllViews()
                 }
 
+                val backgroundRunner = Executors.newFixedThreadPool(3)
+
                 for (photoFile in files) {
                     // Temporary image with no content.
                     if (photoFile.length() == 0L) {
@@ -185,10 +187,15 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
                             photos.addView(imgView)
                             imgView.startAnimation(animation)
+                        }
 
-                            imgView.setOnClickListener {
-                                val bitmapFullSize = modifyPhoto(photoFile, null)
-                                showPhotoFullScreen(photoFile, bitmapFullSize)
+                        backgroundRunner.execute {
+                            val bitmapFullSize = modifyPhoto(photoFile, null)
+
+                            runOnUiThread {
+                                imgView.setOnClickListener {
+                                    showPhotoFullScreen(photoFile, bitmapFullSize)
+                                }
                             }
                         }
 
