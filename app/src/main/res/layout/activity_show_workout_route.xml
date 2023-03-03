@@ -29,8 +29,9 @@
 
         <HorizontalScrollView
             android:id="@+id/images_scroll"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="125dp"
+            android:layout_gravity="center_horizontal"
             android:layout_marginBottom="10dp">
 
             <LinearLayout
