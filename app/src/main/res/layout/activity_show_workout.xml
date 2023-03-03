@@ -21,12 +21,20 @@
             android:textSize="14pt" />
 
         <TextView
-            android:id="@+id/date_started"
+            android:id="@+id/subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
             android:textAlignment="center"
             android:textSize="6pt" />
+
+        <TextView
+            android:id="@+id/timer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:textAlignment="center"
+            android:textSize="12pt" />
 
         <Button
             android:id="@+id/add_route"

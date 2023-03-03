@@ -2,6 +2,8 @@ package com.example.climbit.activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.text.format.DateFormat
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
@@ -16,9 +18,10 @@ import java.util.*
 import java.util.concurrent.Executors
 
 class ShowWorkoutActivity : BaseActivity() {
-    var workoutID: Long? = null
-    var workout: Workout? = null
-    var routes: List<WorkoutRouteWithSets>? = null
+    private var workoutID: Long? = null
+    private var workout: Workout? = null
+    private var routes: List<WorkoutRouteWithSets>? = null
+    private var handler: Handler? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,6 +30,27 @@ class ShowWorkoutActivity : BaseActivity() {
 
         findViewById<Button>(R.id.add_route).setOnClickListener(this::addRoute)
         findViewById<Button>(R.id.finish).setOnClickListener(this::finishWorkkout)
+    }
+
+    private fun showTimer() {
+        workout?.also {
+            val diff = Date().time - it.dateStarted.time
+            val timer = findViewById<TextView>(R.id.timer)
+
+            if (diff >= (24 * 60 * 60 * 1000)) {
+                timer.visibility = View.GONE
+                return
+            }
+
+            val dur = Date(diff)
+            var dateFormat = "mm:ss"
+
+            if (diff >= (60 * 60 * 1000)) {
+                dateFormat = "HH:mm:ss"
+            }
+
+            timer.text = DateFormat.format(dateFormat, dur)
+        }
     }
 
     override fun onResume() {
@@ -39,7 +63,6 @@ class ShowWorkoutActivity : BaseActivity() {
 
                     runOnUiThread {
                         findViewById<TextView>(R.id.title).text = workout.title
-                        findViewById<TextView>(R.id.date_started).text = TimeUtil.formatDatetime(workout.dateStarted)
 
                         workout.dateFinished?.also {
                             findViewById<Button>(R.id.add_route).visibility = View.GONE
@@ -50,6 +73,28 @@ class ShowWorkoutActivity : BaseActivity() {
                             val adapter = WorkoutRouteArrayAdapter(this, workout.dateFinished != null, routes)
                             val list = findViewById<RecyclerView>(R.id.routes_list)
                             list.adapter = adapter
+                        }
+
+                        workout.dateFinished?.let {
+                            val subtitle = "${TimeUtil.formatDatetime(workout.dateStarted)} - ${TimeUtil.formatDatetime(it)}"
+                            findViewById<TextView>(R.id.subtitle).text = subtitle
+                            findViewById<TextView>(R.id.timer).visibility = View.GONE
+                        } ?: run {
+                            val subtitle = "${getString(R.string.workout_timer)}:"
+                            findViewById<TextView>(R.id.subtitle).text = subtitle
+
+                            handler?.also {
+                                it.removeCallbacksAndMessages(null)
+                            }
+
+                            handler = Handler(mainLooper).also {
+                                it.post(object : Runnable {
+                                    override fun run() {
+                                        showTimer()
+                                        it.postDelayed(this, 1000)
+                                    }
+                                })
+                            }
                         }
                     }
                 }
