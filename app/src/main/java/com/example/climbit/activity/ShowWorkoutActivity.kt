@@ -44,14 +44,17 @@ class ShowWorkoutActivity : BaseActivity() {
                 return
             }
 
-            val dur = Date(diff)
+            val calendar = Calendar.getInstance()
+            calendar.timeZone = TimeZone.getTimeZone("UTC")
+            calendar.time = Date(diff)
+
             var dateFormat = "mm:ss"
 
             if (diff >= (60 * 60 * 1000)) {
                 dateFormat = "HH:mm:ss"
             }
 
-            timer.text = DateFormat.format(dateFormat, dur)
+            timer.text = DateFormat.format(dateFormat, calendar)
         }
     }
 
