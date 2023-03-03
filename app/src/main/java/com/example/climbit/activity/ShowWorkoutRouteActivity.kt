@@ -19,6 +19,7 @@ import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.cardview.widget.CardView
 import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
 import androidx.recyclerview.widget.RecyclerView
@@ -166,6 +167,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                     if (id == routeID) {
                         val bitmapThumbnail = modifyPhoto(photoFile, 125.0F)
                         val imgView = ImageView(this)
+                        val cardView = CardView(this)
 
                         val params = LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -177,7 +179,6 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                         }
 
                         imgView.adjustViewBounds = true
-                        imgView.layoutParams = params
                         imgView.setImageBitmap(bitmapThumbnail)
 
                         runOnUiThread {
@@ -185,7 +186,11 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                             animation.startOffset = 0
                             animation.duration = 500
 
-                            photos.addView(imgView)
+                            cardView.addView(imgView)
+                            cardView.radius = 20.0F
+                            cardView.layoutParams = params
+
+                            photos.addView(cardView)
                             imgView.startAnimation(animation)
                         }
 
