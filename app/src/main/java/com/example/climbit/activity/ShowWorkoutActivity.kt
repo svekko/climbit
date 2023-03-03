@@ -36,9 +36,11 @@ class ShowWorkoutActivity : BaseActivity() {
         workout?.also {
             val diff = Date().time - it.dateStarted.time
             val timer = findViewById<TextView>(R.id.timer)
+            val subtitle = findViewById<TextView>(R.id.subtitle)
 
             if (diff >= (24 * 60 * 60 * 1000)) {
                 timer.visibility = View.GONE
+                subtitle.visibility = View.GONE
                 return
             }
 
