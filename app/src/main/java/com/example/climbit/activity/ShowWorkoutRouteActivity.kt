@@ -2,17 +2,13 @@ package com.example.climbit.activity
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.res.Resources
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.text.format.DateFormat
-import android.util.TypedValue
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.*
@@ -21,12 +17,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.cardview.widget.CardView
 import androidx.core.content.FileProvider
-import androidx.exifinterface.media.ExifInterface
 import androidx.recyclerview.widget.RecyclerView
 import com.example.climbit.App
 import com.example.climbit.R
 import com.example.climbit.adapter.WorkoutSetArrayAdapter
 import com.example.climbit.model.WorkoutSet
+import com.example.climbit.photo.WorkoutRoutePhoto
 import com.github.chrisbanes.photoview.PhotoView
 import java.io.File
 import java.io.IOException
@@ -103,44 +99,6 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         startActivity(intent)
     }
 
-    private fun modifyPhoto(file: File, heightDp: Float?): Bitmap {
-        val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-        val orientation = ExifInterface(file).getAttributeInt(
-            ExifInterface.TAG_ORIENTATION,
-            ExifInterface.ORIENTATION_UNDEFINED
-        )
-
-        if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
-            return modifyPhoto(bitmap, 90.0F, heightDp)
-        }
-
-        if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
-            return modifyPhoto(bitmap, 180.0F, heightDp)
-        }
-
-        if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
-            return modifyPhoto(bitmap, 270.0F, heightDp)
-        }
-
-        return bitmap
-    }
-
-    private fun modifyPhoto(source: Bitmap, angle: Float, heightDp: Float?): Bitmap {
-        var scale = 1.0F
-
-        heightDp?.also {
-            val heightPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, heightDp, Resources.getSystem().displayMetrics)
-            if (heightPx < source.height) {
-                scale = heightPx / source.height
-            }
-        }
-
-        val matrix = Matrix()
-        matrix.postRotate(angle)
-        matrix.postScale(scale, scale)
-        return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
-    }
-
     private fun loadPhotos() {
         var count = 0
         val photos = findViewById<LinearLayout>(R.id.images)
@@ -161,50 +119,49 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                         continue
                     }
 
-                    val nameParts = photoFile.name.split("___")
-                    val id = nameParts[0].toLong()
+                    WorkoutRoutePhoto(photoFile).let { photo ->
+                        if (photo.routeID == routeID) {
+                            val bitmapThumbnail = photo.asBitmap(125.0F)
+                            val imgView = ImageView(this)
+                            val cardView = CardView(this)
 
-                    if (id == routeID) {
-                        val bitmapThumbnail = modifyPhoto(photoFile, 125.0F)
-                        val imgView = ImageView(this)
-                        val cardView = CardView(this)
+                            val params = LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.MATCH_PARENT,
+                            )
 
-                        val params = LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.WRAP_CONTENT,
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                        )
+                            if (count != 0) {
+                                params.leftMargin = 25
+                            }
 
-                        if (count != 0) {
-                            params.leftMargin = 25
-                        }
-
-                        imgView.adjustViewBounds = true
-                        imgView.setImageBitmap(bitmapThumbnail)
-
-                        runOnUiThread {
-                            val animation = AnimationUtils.loadAnimation(this, androidx.appcompat.R.anim.abc_fade_in)
-                            animation.startOffset = 0
-                            animation.duration = 500
-
-                            cardView.addView(imgView)
-                            cardView.radius = 20.0F
-                            cardView.layoutParams = params
-
-                            photos.addView(cardView)
-                            imgView.startAnimation(animation)
-                        }
-
-                        backgroundRunner.execute {
-                            val bitmapFullSize = modifyPhoto(photoFile, null)
+                            imgView.adjustViewBounds = true
+                            imgView.setImageBitmap(bitmapThumbnail)
 
                             runOnUiThread {
-                                imgView.setOnClickListener {
-                                    showPhotoFullScreen(photoFile, bitmapFullSize)
+                                val animation = AnimationUtils.loadAnimation(this, androidx.appcompat.R.anim.abc_fade_in)
+                                animation.startOffset = 0
+                                animation.duration = 500
+
+                                cardView.addView(imgView)
+                                cardView.radius = 20.0F
+                                cardView.layoutParams = params
+
+                                photos.addView(cardView)
+                                imgView.startAnimation(animation)
+                            }
+
+                            backgroundRunner.execute {
+                                val bitmapFullSize = photo.asBitmap()
+
+                                runOnUiThread {
+                                    imgView.setOnClickListener {
+                                        showPhotoFullScreen(photoFile, bitmapFullSize)
+                                    }
                                 }
                             }
-                        }
 
-                        count++
+                            count++
+                        }
                     }
                 }
             }
