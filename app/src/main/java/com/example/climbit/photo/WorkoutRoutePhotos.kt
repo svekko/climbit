@@ -25,4 +25,10 @@ class WorkoutRoutePhotos(ctx: Context, private val routeID: Long) {
             }
         }
     }
+
+    fun deleteAll() {
+        for (photo in photos) {
+            photo.file.delete()
+        }
+    }
 }

@@ -12,6 +12,7 @@ import com.example.climbit.R
 import com.example.climbit.activity.BaseActivity
 import com.example.climbit.activity.ShowWorkoutActivity
 import com.example.climbit.model.Workout
+import com.example.climbit.photo.WorkoutRoutePhotos
 import com.example.climbit.util.TimeUtil
 import java.util.concurrent.Executors
 
@@ -63,7 +64,14 @@ class WorkoutArrayAdapter(act: BaseActivity, list: ArrayList<Workout>) : Recycle
             holder.deleteButton.setOnClickListener {
                 activity.withConfirmation {
                     Executors.newSingleThreadExecutor().execute {
-                        App.getDB(activity).workoutDAO().delete(workout.id)
+                        val db = App.getDB(activity)
+                        val routes = db.workoutRouteDAO().getRoutesAndSets(workout.id)
+
+                        for (route in routes) {
+                            WorkoutRoutePhotos(activity, route.workoutRoute.id).deleteAll()
+                        }
+
+                        db.workoutDAO().delete(workout.id)
 
                         activity.runOnUiThread {
                             activity.finish()
