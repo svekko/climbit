@@ -22,7 +22,7 @@ import com.example.climbit.App
 import com.example.climbit.R
 import com.example.climbit.adapter.WorkoutSetArrayAdapter
 import com.example.climbit.model.WorkoutSet
-import com.example.climbit.photo.WorkoutRoutePhoto
+import com.example.climbit.photo.WorkoutRoutePhotos
 import com.github.chrisbanes.photoview.PhotoView
 import java.io.File
 import java.io.IOException
@@ -103,67 +103,54 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         var count = 0
         val photos = findViewById<LinearLayout>(R.id.images)
         val photosScroll = findViewById<HorizontalScrollView>(R.id.images_scroll)
+        val backgroundRunner = Executors.newFixedThreadPool(3)
 
-        getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.also { dir ->
-            dir.listFiles()?.also { files ->
-                runOnUiThread {
-                    photos.removeAllViews()
+        routeID?.also { routeID ->
+            runOnUiThread {
+                photos.removeAllViews()
+            }
+
+            for (photo in WorkoutRoutePhotos(this, routeID).photos) {
+                val bitmapThumbnail = photo.asBitmap(125.0F)
+                val imgView = ImageView(this)
+                val cardView = CardView(this)
+
+                val params = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                )
+
+                if (count != 0) {
+                    params.leftMargin = 25
                 }
 
-                val backgroundRunner = Executors.newFixedThreadPool(3)
+                imgView.adjustViewBounds = true
+                imgView.setImageBitmap(bitmapThumbnail)
 
-                for (photoFile in files) {
-                    // Temporary image with no content.
-                    if (photoFile.length() == 0L) {
-                        photoFile.delete()
-                        continue
-                    }
+                runOnUiThread {
+                    val animation = AnimationUtils.loadAnimation(this, androidx.appcompat.R.anim.abc_fade_in)
+                    animation.startOffset = 0
+                    animation.duration = 500
 
-                    WorkoutRoutePhoto(photoFile).let { photo ->
-                        if (photo.routeID == routeID) {
-                            val bitmapThumbnail = photo.asBitmap(125.0F)
-                            val imgView = ImageView(this)
-                            val cardView = CardView(this)
+                    cardView.addView(imgView)
+                    cardView.radius = 20.0F
+                    cardView.layoutParams = params
 
-                            val params = LinearLayout.LayoutParams(
-                                LinearLayout.LayoutParams.WRAP_CONTENT,
-                                LinearLayout.LayoutParams.MATCH_PARENT,
-                            )
+                    photos.addView(cardView)
+                    imgView.startAnimation(animation)
+                }
 
-                            if (count != 0) {
-                                params.leftMargin = 25
-                            }
+                backgroundRunner.execute {
+                    val bitmapFullSize = photo.asBitmap()
 
-                            imgView.adjustViewBounds = true
-                            imgView.setImageBitmap(bitmapThumbnail)
-
-                            runOnUiThread {
-                                val animation = AnimationUtils.loadAnimation(this, androidx.appcompat.R.anim.abc_fade_in)
-                                animation.startOffset = 0
-                                animation.duration = 500
-
-                                cardView.addView(imgView)
-                                cardView.radius = 20.0F
-                                cardView.layoutParams = params
-
-                                photos.addView(cardView)
-                                imgView.startAnimation(animation)
-                            }
-
-                            backgroundRunner.execute {
-                                val bitmapFullSize = photo.asBitmap()
-
-                                runOnUiThread {
-                                    imgView.setOnClickListener {
-                                        showPhotoFullScreen(photoFile, bitmapFullSize)
-                                    }
-                                }
-                            }
-
-                            count++
+                    runOnUiThread {
+                        imgView.setOnClickListener {
+                            showPhotoFullScreen(photo.file, bitmapFullSize)
                         }
                     }
                 }
+
+                count++
             }
         }
 

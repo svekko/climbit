@@ -8,7 +8,7 @@ import android.util.TypedValue
 import androidx.exifinterface.media.ExifInterface
 import java.io.File
 
-class WorkoutRoutePhoto(private val file: File) {
+class WorkoutRoutePhoto(val file: File) {
     val routeID: Long
 
     init {
