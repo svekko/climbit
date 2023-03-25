@@ -2,8 +2,7 @@ package com.example.climbit.activity
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.Color
+import android.graphics.*
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -28,6 +27,10 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.Executors
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 class ShowWorkoutRouteActivity : BaseActivity() {
     private var routeID: Long? = null
@@ -36,6 +39,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
     private var photoPath: String? = null
     private var isFinished = false
     private var handler: Handler? = null
+    private val circles: MutableList<IntArray> = ArrayList()
 
     override fun onDestroy() {
         deleteTempPhotoOnPhotoPath(true)
@@ -166,16 +170,82 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_image_enlarged, null, false)
 
         val photoView = dialogView.findViewById<PhotoView>(R.id.image)
+        var tmpBitmap: Bitmap? = null
+
         photoView.setImageBitmap(bitmap)
+        photoView.setScaleLevels(1F, 5F, 10F)
 
         if (!isFinished) {
+            photoView.setOnPhotoTapListener { _, w, h ->
+                val zoomRatio = photoView.displayRect.width() / photoView.width
+                val matrix = Matrix()
+
+                tmpBitmap = bitmap.copy(bitmap.config, true).also { tmpBitmap ->
+                    photoView.attacher.getSuppMatrix(matrix)
+
+                    val circleCx = (tmpBitmap.width * w).roundToInt()
+                    val circleCy = (tmpBitmap.height * h).roundToInt()
+                    val circleRadius = min(250F, max(350F / zoomRatio, 50F)).roundToInt()
+                    val strokeWidth = circleRadius / 5
+
+                    val canvas = Canvas(tmpBitmap)
+                    var addCircle = true
+                    val newCircles: MutableList<IntArray> = ArrayList()
+
+                    for (circle in circles) {
+                        if (circle.size >= 3) {
+                            val circleAvgRadius = (circleRadius + circle[2]) / 2
+
+                            if (abs(circle[0] - circleCx) >= circleAvgRadius || abs(circle[1] - circleCy) >= circleAvgRadius) {
+                                newCircles.add(circle)
+                            } else {
+                                addCircle = false
+                            }
+                        }
+                    }
+
+                    if (addCircle) {
+                        newCircles.add(intArrayOf(circleCx, circleCy, circleRadius, strokeWidth))
+                    }
+
+                    circles.clear()
+                    circles.addAll(newCircles)
+
+                    for (circle in circles) {
+                        if (circle.size >= 3) {
+                            val paint = Paint()
+                            paint.color = Color.BLUE
+                            paint.strokeWidth = circle[3].toFloat()
+                            paint.style = Paint.Style.STROKE
+                            paint.blendMode = BlendMode.MULTIPLY
+                            paint.alpha = 128
+
+                            canvas.drawCircle(circle[0].toFloat(), circle[1].toFloat(), circle[2].toFloat(), paint)
+                        }
+                    }
+
+                    photoView.setImageBitmap(tmpBitmap)
+                    photoView.setDisplayMatrix(matrix)
+                }
+            }
+
             builder.setNeutralButton(R.string.remove) { _, _ ->
                 file.delete()
                 reloadActivity()
             }
         }
 
-        builder.setNegativeButton(R.string.close, null)
+        builder.setNegativeButton(R.string.close) { _, _ ->
+            if (circles.size > 0) {
+                file.outputStream().use { out ->
+                    tmpBitmap?.also {
+                        it.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                    }
+                }
+
+                reloadActivity()
+            }
+        }
 
         val dialog = builder.create()
         dialog.setView(dialogView)
