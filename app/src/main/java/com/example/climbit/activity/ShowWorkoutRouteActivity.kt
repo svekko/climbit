@@ -193,7 +193,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                     val newCircles: MutableList<IntArray> = ArrayList()
 
                     for (circle in circles) {
-                        if (circle.size >= 3) {
+                        if (circle.size >= 4) {
                             val circleAvgRadius = (circleRadius + circle[2]) / 2
 
                             if (abs(circle[0] - circleCx) >= circleAvgRadius || abs(circle[1] - circleCy) >= circleAvgRadius) {
@@ -212,7 +212,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                     circles.addAll(newCircles)
 
                     for (circle in circles) {
-                        if (circle.size >= 3) {
+                        if (circle.size >= 4) {
                             val paint = Paint()
                             paint.color = Color.BLUE
                             paint.strokeWidth = circle[3].toFloat()
