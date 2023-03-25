@@ -175,6 +175,8 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         photoView.setImageBitmap(bitmap)
         photoView.setScaleLevels(1F, 5F, 10F)
 
+        circles.clear()
+
         if (!isFinished) {
             photoView.setOnPhotoTapListener { _, w, h ->
                 val zoomRatio = photoView.displayRect.width() / photoView.width
