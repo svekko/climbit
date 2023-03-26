@@ -35,6 +35,7 @@
     <string name="select_difficulty">Select difficulty</string>
     <string name="unknown_grade">Unknown grade</string>
     <string name="set_n">Set #%1$d</string>
+    <string name="save">Save</string>
     <plurals name="n_attempts">
         <item quantity="one">%1$d attempt</item>
         <item quantity="other">%1$d attempts</item>

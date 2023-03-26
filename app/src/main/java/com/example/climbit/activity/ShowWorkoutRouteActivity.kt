@@ -1,6 +1,7 @@
 package com.example.climbit.activity
 
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.Intent
 import android.graphics.*
 import android.net.Uri
@@ -178,7 +179,33 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         circles.clear()
 
         if (!isFinished) {
-            photoView.setOnPhotoTapListener { _, w, h ->
+            builder.setNeutralButton(R.string.remove) { _, _ ->
+                file.delete()
+                reloadActivity()
+            }
+
+            builder.setNegativeButton(R.string.save) { _, _ ->
+                if (circles.size > 0) {
+                    file.outputStream().use { out ->
+                        tmpBitmap?.also {
+                            it.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                        }
+                    }
+
+                    reloadActivity()
+                }
+            }
+        }
+
+        builder.setPositiveButton(R.string.close, null)
+
+        val dialog = builder.create()
+        dialog.setView(dialogView)
+        dialog.show()
+        dialog.getButton(Dialog.BUTTON_NEGATIVE).visibility = View.GONE
+
+        if (!isFinished) {
+            photoView.setOnPhotoTapListener { d, w, h ->
                 val zoomRatio = photoView.displayRect.width() / photoView.width
                 val matrix = Matrix()
 
@@ -228,30 +255,15 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
                     photoView.setImageBitmap(tmpBitmap)
                     photoView.setDisplayMatrix(matrix)
-                }
-            }
 
-            builder.setNeutralButton(R.string.remove) { _, _ ->
-                file.delete()
-                reloadActivity()
-            }
-        }
-
-        builder.setNegativeButton(R.string.close) { _, _ ->
-            if (circles.size > 0) {
-                file.outputStream().use { out ->
-                    tmpBitmap?.also {
-                        it.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                    if (circles.size > 0) {
+                        dialog.getButton(Dialog.BUTTON_NEGATIVE).visibility = View.VISIBLE
+                    } else {
+                        dialog.getButton(Dialog.BUTTON_NEGATIVE).visibility = View.GONE
                     }
                 }
-
-                reloadActivity()
             }
         }
-
-        val dialog = builder.create()
-        dialog.setView(dialogView)
-        dialog.show()
     }
 
     private fun initTakePhotoListener() {
