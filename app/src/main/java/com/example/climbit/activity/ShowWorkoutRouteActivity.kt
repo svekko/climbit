@@ -205,7 +205,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         dialog.getButton(Dialog.BUTTON_NEGATIVE).visibility = View.GONE
 
         if (!isFinished) {
-            photoView.setOnPhotoTapListener { d, w, h ->
+            photoView.setOnPhotoTapListener { _, w, h ->
                 val zoomRatio = photoView.displayRect.width() / photoView.width
                 val matrix = Matrix()
 
@@ -243,10 +243,10 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                     for (circle in circles) {
                         if (circle.size >= 4) {
                             var paint = Paint()
-                            paint.color = Color.BLACK
+                            paint.color = Color.WHITE
                             paint.style = Paint.Style.FILL
                             paint.blendMode = BlendMode.OVERLAY
-                            paint.alpha = 65
+                            paint.alpha = 128
 
                             canvas.drawCircle(circle[0].toFloat(), circle[1].toFloat(), circle[2].toFloat(), paint)
 
@@ -254,7 +254,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                             paint.color = Color.WHITE
                             paint.style = Paint.Style.STROKE
                             paint.strokeWidth = circle[3].toFloat()
-                            paint.alpha = 135
+                            paint.alpha = 128
 
                             canvas.drawCircle(circle[0].toFloat(), circle[1].toFloat(), circle[2].toFloat() + (circle[3].toFloat() / 2), paint)
                         }
