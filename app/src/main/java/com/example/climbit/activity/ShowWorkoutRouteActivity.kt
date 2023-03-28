@@ -215,7 +215,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                     val circleCx = (tmpBitmap.width * w).roundToInt()
                     val circleCy = (tmpBitmap.height * h).roundToInt()
                     val circleRadius = min(250F, max(350F / zoomRatio, 50F)).roundToInt()
-                    val strokeWidth = circleRadius / 7
+                    val strokeWidth = max(circleRadius / 5, 15)
 
                     val canvas = Canvas(tmpBitmap)
                     var addCircle = true
@@ -246,7 +246,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                             paint.color = Color.WHITE
                             paint.style = Paint.Style.FILL
                             paint.blendMode = BlendMode.OVERLAY
-                            paint.alpha = 128
+                            paint.alpha = 64
 
                             canvas.drawCircle(circle[0].toFloat(), circle[1].toFloat(), circle[2].toFloat(), paint)
 
