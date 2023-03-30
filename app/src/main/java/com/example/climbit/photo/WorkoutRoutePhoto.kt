@@ -43,7 +43,7 @@ class WorkoutRoutePhoto(val file: File) {
             return loadPhoto(bitmap, 270.0F, heightDp)
         }
 
-        return bitmap
+        return loadPhoto(bitmap, 0.0F, heightDp)
     }
 
     private fun loadPhoto(source: Bitmap, angle: Float, heightDp: Float?): Bitmap {
