@@ -179,22 +179,8 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         circles.clear()
 
         if (!isFinished) {
-            builder.setNeutralButton(R.string.remove) { _, _ ->
-                file.delete()
-                reloadActivity()
-            }
-
-            builder.setNegativeButton(R.string.save) { _, _ ->
-                if (circles.size > 0) {
-                    file.outputStream().use { out ->
-                        tmpBitmap?.also {
-                            it.compress(Bitmap.CompressFormat.JPEG, 100, out)
-                        }
-                    }
-
-                    reloadActivity()
-                }
-            }
+            builder.setNeutralButton(R.string.remove, null)
+            builder.setNegativeButton(R.string.save, null)
         }
 
         builder.setPositiveButton(R.string.close, null)
@@ -205,6 +191,23 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         dialog.getButton(Dialog.BUTTON_NEGATIVE).visibility = View.GONE
 
         if (!isFinished) {
+            dialog.getButton(Dialog.BUTTON_NEUTRAL).setOnClickListener {
+                file.delete()
+                reloadActivity()
+            }
+
+            dialog.getButton(Dialog.BUTTON_NEGATIVE).setOnClickListener {
+                if (circles.size > 0) {
+                    file.outputStream().use { out ->
+                        tmpBitmap?.also {
+                            it.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                        }
+                    }
+
+                    reloadActivity()
+                }
+            }
+
             photoView.setOnPhotoTapListener { _, w, h ->
                 val zoomRatio = photoView.displayRect.width() / photoView.width
                 val matrix = Matrix()
