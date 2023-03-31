@@ -9,6 +9,8 @@ class WorkoutRoutePhotos(ctx: Context, private val routeID: Long) {
     init {
         ctx.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.also { dir ->
             dir.listFiles()?.also { files ->
+                val photosResult: MutableList<WorkoutRoutePhoto> = arrayListOf()
+
                 for (file in files) {
                     // Temporary image with no content.
                     if (file.length() == 0L) {
@@ -18,10 +20,12 @@ class WorkoutRoutePhotos(ctx: Context, private val routeID: Long) {
 
                     WorkoutRoutePhoto(file).also { photo ->
                         if (photo.routeID == routeID) {
-                            photos.add(photo)
+                            photosResult.add(photo)
                         }
                     }
                 }
+
+                photos.addAll(photosResult.sortedWith(compareByDescending { it.file.name }))
             }
         }
     }

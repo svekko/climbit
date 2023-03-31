@@ -22,7 +22,9 @@ import com.example.climbit.App
 import com.example.climbit.R
 import com.example.climbit.adapter.WorkoutSetArrayAdapter
 import com.example.climbit.model.WorkoutSet
+import com.example.climbit.photo.WorkoutRoutePhoto
 import com.example.climbit.photo.WorkoutRoutePhotos
+import com.example.climbit.view.SwipeListener
 import com.github.chrisbanes.photoview.PhotoView
 import java.io.File
 import java.io.IOException
@@ -41,6 +43,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
     private var isFinished = false
     private var handler: Handler? = null
     private val circles: MutableList<IntArray> = ArrayList()
+    private val photosList: MutableList<WorkoutRoutePhoto> = ArrayList()
 
     override fun onDestroy() {
         deleteTempPhotoOnPhotoPath(true)
@@ -115,8 +118,11 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                 photos.removeAllViews()
             }
 
-            for (photo in WorkoutRoutePhotos(this, routeID).photos) {
+            photosList.addAll(WorkoutRoutePhotos(this, routeID).photos)
+
+            for (photo in photosList) {
                 val bitmapThumbnail = photo.asBitmap(125.0F)
+                val index = count
                 val imgView = ImageView(this)
                 val cardView = CardView(this)
 
@@ -150,7 +156,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
                     runOnUiThread {
                         imgView.setOnClickListener {
-                            showPhotoFullScreen(photo.file, bitmapFullSize)
+                            showPhotoFullScreen(index, bitmapFullSize)
                         }
                     }
                 }
@@ -166,110 +172,140 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         }
     }
 
-    private fun showPhotoFullScreen(file: File, bitmap: Bitmap) {
-        val builder = AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
-        val dialogView = layoutInflater.inflate(R.layout.dialog_image_enlarged, null, false)
+    private fun showPhotoFullScreen(index: Int, bitmap: Bitmap) {
+        photosList.getOrNull(index)?.also { photo ->
+            val builder = AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+            val dialogView = layoutInflater.inflate(R.layout.dialog_image_enlarged, null, false)
 
-        val photoView = dialogView.findViewById<PhotoView>(R.id.image)
-        var tmpBitmap: Bitmap? = null
+            val photoView = dialogView.findViewById<PhotoView>(R.id.image)
+            var tmpBitmap: Bitmap? = null
 
-        photoView.setImageBitmap(bitmap)
-        photoView.setScaleLevels(1F, 5F, 10F)
+            photoView.setImageBitmap(bitmap)
+            photoView.setScaleLevels(1F, 5F, 10F)
 
-        circles.clear()
+            circles.clear()
 
-        if (!isFinished) {
-            builder.setNeutralButton(R.string.remove, null)
-            builder.setNegativeButton(R.string.save, null)
-        }
-
-        builder.setPositiveButton(R.string.close, null)
-
-        val dialog = builder.create()
-        dialog.setView(dialogView)
-        dialog.show()
-        dialog.getButton(Dialog.BUTTON_NEGATIVE).visibility = View.GONE
-
-        if (!isFinished) {
-            dialog.getButton(Dialog.BUTTON_NEUTRAL).setOnClickListener {
-                file.delete()
-                reloadActivity()
+            if (!isFinished) {
+                builder.setNeutralButton(R.string.remove, null)
+                builder.setNegativeButton(R.string.save, null)
             }
 
-            dialog.getButton(Dialog.BUTTON_NEGATIVE).setOnClickListener {
-                if (circles.size > 0) {
-                    file.outputStream().use { out ->
-                        tmpBitmap?.also {
-                            it.compress(Bitmap.CompressFormat.JPEG, 100, out)
-                        }
-                    }
+            builder.setPositiveButton(R.string.close, null)
 
-                    reloadActivity()
+            val dialog = builder.create()
+            dialog.setView(dialogView)
+            dialog.show()
+            dialog.getButton(Dialog.BUTTON_NEGATIVE).visibility = View.GONE
+
+            val swipeListener = SwipeListener()
+            val dismissDialog = Runnable {
+                Executors.newSingleThreadExecutor().execute {
+                    Thread.sleep(100)
+                    runOnUiThread {
+                        dialog.dismiss()
+                    }
                 }
             }
 
-            photoView.setOnPhotoTapListener { _, w, h ->
-                val zoomRatio = photoView.displayRect.width() / photoView.width
-                val matrix = Matrix()
+            // Right swipe - move to previous photo.
+            swipeListener.onRightSwipe = Runnable {
+                photosList.getOrNull(index - 1)?.also { prevPhoto ->
+                    showPhotoFullScreen(index - 1, prevPhoto.asBitmap())
+                    dismissDialog.run()
+                }
+            }
 
-                tmpBitmap = bitmap.copy(bitmap.config, true).also { tmpBitmap ->
-                    photoView.attacher.getSuppMatrix(matrix)
+            // Left swipe - move to next photo.
+            swipeListener.onLeftSwipe = Runnable {
+                photosList.getOrNull(index + 1)?.also { nextPhoto ->
+                    showPhotoFullScreen(index + 1, nextPhoto.asBitmap())
+                    dismissDialog.run()
+                }
+            }
 
-                    val circleCx = (tmpBitmap.width * w).roundToInt()
-                    val circleCy = (tmpBitmap.height * h).roundToInt()
-                    val circleRadius = min(250F, max(350F / zoomRatio, 50F)).roundToInt()
-                    val strokeWidth = max(circleRadius / 5, 15)
+            photoView.setOnSingleFlingListener(swipeListener)
 
-                    val canvas = Canvas(tmpBitmap)
-                    var addCircle = true
-                    val newCircles: MutableList<IntArray> = ArrayList()
+            if (!isFinished) {
+                dialog.getButton(Dialog.BUTTON_NEUTRAL).setOnClickListener {
+                    photo.file.delete()
+                    reloadActivity()
+                }
 
-                    for (circle in circles) {
-                        if (circle.size >= 4) {
-                            val circleAvgRadius = (circleRadius + circle[2]) / 2
-
-                            if (abs(circle[0] - circleCx) >= circleAvgRadius || abs(circle[1] - circleCy) >= circleAvgRadius) {
-                                newCircles.add(circle)
-                            } else {
-                                addCircle = false
+                dialog.getButton(Dialog.BUTTON_NEGATIVE).setOnClickListener {
+                    if (circles.size > 0) {
+                        photo.file.outputStream().use { out ->
+                            tmpBitmap?.also {
+                                it.compress(Bitmap.CompressFormat.JPEG, 100, out)
                             }
                         }
+
+                        reloadActivity()
                     }
+                }
 
-                    if (addCircle) {
-                        newCircles.add(intArrayOf(circleCx, circleCy, circleRadius, strokeWidth))
-                    }
+                photoView.setOnPhotoTapListener { _, w, h ->
+                    val zoomRatio = photoView.displayRect.width() / photoView.width
+                    val matrix = Matrix()
 
-                    circles.clear()
-                    circles.addAll(newCircles)
+                    tmpBitmap = bitmap.copy(bitmap.config, true).also { tmpBitmap ->
+                        photoView.attacher.getSuppMatrix(matrix)
 
-                    for (circle in circles) {
-                        if (circle.size >= 4) {
-                            var paint = Paint()
-                            paint.color = Color.WHITE
-                            paint.style = Paint.Style.FILL
-                            paint.blendMode = BlendMode.OVERLAY
-                            paint.alpha = 64
+                        val circleCx = (tmpBitmap.width * w).roundToInt()
+                        val circleCy = (tmpBitmap.height * h).roundToInt()
+                        val circleRadius = min(250F, max(350F / zoomRatio, 50F)).roundToInt()
+                        val strokeWidth = max(circleRadius / 5, 15)
 
-                            canvas.drawCircle(circle[0].toFloat(), circle[1].toFloat(), circle[2].toFloat(), paint)
+                        val canvas = Canvas(tmpBitmap)
+                        var addCircle = true
+                        val newCircles: MutableList<IntArray> = ArrayList()
 
-                            paint = Paint()
-                            paint.color = Color.WHITE
-                            paint.style = Paint.Style.STROKE
-                            paint.strokeWidth = circle[3].toFloat()
-                            paint.alpha = 128
+                        for (circle in circles) {
+                            if (circle.size >= 4) {
+                                val circleAvgRadius = (circleRadius + circle[2]) / 2
 
-                            canvas.drawCircle(circle[0].toFloat(), circle[1].toFloat(), circle[2].toFloat() + (circle[3].toFloat() / 2), paint)
+                                if (abs(circle[0] - circleCx) >= circleAvgRadius || abs(circle[1] - circleCy) >= circleAvgRadius) {
+                                    newCircles.add(circle)
+                                } else {
+                                    addCircle = false
+                                }
+                            }
                         }
-                    }
 
-                    photoView.setImageBitmap(tmpBitmap)
-                    photoView.setDisplayMatrix(matrix)
+                        if (addCircle) {
+                            newCircles.add(intArrayOf(circleCx, circleCy, circleRadius, strokeWidth))
+                        }
 
-                    if (circles.size > 0) {
-                        dialog.getButton(Dialog.BUTTON_NEGATIVE).visibility = View.VISIBLE
-                    } else {
-                        dialog.getButton(Dialog.BUTTON_NEGATIVE).visibility = View.GONE
+                        circles.clear()
+                        circles.addAll(newCircles)
+
+                        for (circle in circles) {
+                            if (circle.size >= 4) {
+                                var paint = Paint()
+                                paint.color = Color.BLUE
+                                paint.style = Paint.Style.FILL
+                                paint.blendMode = BlendMode.OVERLAY
+                                paint.alpha = 64
+
+                                canvas.drawCircle(circle[0].toFloat(), circle[1].toFloat(), circle[2].toFloat(), paint)
+
+                                paint = Paint()
+                                paint.color = Color.BLUE
+                                paint.style = Paint.Style.STROKE
+                                paint.strokeWidth = circle[3].toFloat()
+                                paint.alpha = 128
+
+                                canvas.drawCircle(circle[0].toFloat(), circle[1].toFloat(), circle[2].toFloat() + (circle[3].toFloat() / 2), paint)
+                            }
+                        }
+
+                        photoView.setImageBitmap(tmpBitmap)
+                        photoView.setDisplayMatrix(matrix)
+
+                        if (circles.size > 0) {
+                            dialog.getButton(Dialog.BUTTON_NEGATIVE).visibility = View.VISIBLE
+                        } else {
+                            dialog.getButton(Dialog.BUTTON_NEGATIVE).visibility = View.GONE
+                        }
                     }
                 }
             }
