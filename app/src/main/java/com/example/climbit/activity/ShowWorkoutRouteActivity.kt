@@ -187,10 +187,10 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             val annotationStrokeWidth = annotation.strokeWidth * bitmap.width
 
             var paint = Paint()
-            paint.color = Color.BLUE
+            paint.color = Color.WHITE
             paint.style = Paint.Style.FILL
             paint.blendMode = BlendMode.OVERLAY
-            paint.alpha = 64
+            paint.alpha = 80
 
             canvas.drawCircle(annotationX, annotationY, annotationRadius, paint)
 
@@ -260,7 +260,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
             photoView.setOnSingleFlingListener(swipeListener)
 
-            if (!isFinished) {
+            if (isFinished) {
                 dialog.getButton(Dialog.BUTTON_NEUTRAL).setOnClickListener {
                     photo.file.delete()
                     reloadActivity()
