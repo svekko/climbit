@@ -175,32 +175,51 @@ class ShowWorkoutRouteActivity : BaseActivity() {
     }
 
     private fun drawAnnotations(bitmap: Bitmap, photo: WorkoutRoutePhoto) {
-        val canvas = Canvas(bitmap)
+        val maskBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        val maskCanvas = Canvas(maskBitmap)
 
         annotations.clear()
         annotations.addAll(App.getDB(this).holdAnnotationDAO().getAll(photo.file.name))
 
+        // Skip drawing mask layer if there are no annotations.
+        if (annotations.size > 0) {
+            val maskBG = Paint()
+            maskBG.setARGB(85, 0, 0, 0)
+            maskCanvas.drawPaint(maskBG)
+        }
+
+        // Remove masked from the parts where annotations are located.
+        for (annotation in annotations) {
+            val annotationX = annotation.x * bitmap.width
+            val annotationY = annotation.y * bitmap.width
+            val annotationRadius = annotation.radius * bitmap.width
+
+            val paint = Paint()
+            paint.color = Color.WHITE
+
+            maskCanvas.drawCircle(annotationX, annotationY, annotationRadius, paint)
+        }
+
+        val finalCanvas = Canvas(bitmap)
+        val maskPaint = Paint()
+
+        maskPaint.blendMode = BlendMode.DARKEN
+        finalCanvas.drawBitmap(maskBitmap, 0F, 0F, maskPaint)
+
+        // Draw stroke on top of the final image.
         for (annotation in annotations) {
             val annotationX = annotation.x * bitmap.width
             val annotationY = annotation.y * bitmap.width
             val annotationRadius = annotation.radius * bitmap.width
             val annotationStrokeWidth = annotation.strokeWidth * bitmap.width
 
-            var paint = Paint()
+            val paint = Paint()
             paint.color = Color.WHITE
-            paint.style = Paint.Style.FILL
-            paint.blendMode = BlendMode.OVERLAY
-            paint.alpha = 80
-
-            canvas.drawCircle(annotationX, annotationY, annotationRadius, paint)
-
-            paint = Paint()
-            paint.color = Color.BLUE
             paint.style = Paint.Style.STROKE
             paint.strokeWidth = annotationStrokeWidth
-            paint.alpha = 128
+            paint.alpha = 175
 
-            canvas.drawCircle(annotationX, annotationY, annotationRadius + (annotationStrokeWidth / 2), paint)
+            finalCanvas.drawCircle(annotationX, annotationY, annotationRadius + (annotationStrokeWidth / 2), paint)
         }
     }
 
@@ -211,14 +230,15 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             val photoView = dialogView.findViewById<PhotoView>(R.id.image)
             var edited = wasEdited
 
-            photoView.setImageBitmap(bitmap)
             photoView.setScaleLevels(1F, 5F, 10F)
 
             bitmap.copy(bitmap.config, true).also { tmpBitmap ->
-                photoView.setImageBitmap(tmpBitmap)
-
                 Executors.newSingleThreadExecutor().execute {
                     drawAnnotations(tmpBitmap, photo)
+
+                    runOnUiThread {
+                        photoView.setImageBitmap(tmpBitmap)
+                    }
                 }
             }
 
