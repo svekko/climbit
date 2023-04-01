@@ -323,10 +323,12 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                             }
 
                             drawAnnotations(tmpBitmap, photo)
-                        }
 
-                        photoView.setImageBitmap(tmpBitmap)
-                        photoView.setDisplayMatrix(matrix)
+                            runOnUiThread {
+                                photoView.setImageBitmap(tmpBitmap)
+                                photoView.setDisplayMatrix(matrix)
+                            }
+                        }
                     }
                 }
             }
