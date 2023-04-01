@@ -157,7 +157,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
                     runOnUiThread {
                         imgView.setOnClickListener {
-                            showPhotoFullScreen(index, bitmapFullSize)
+                            showPhotoFullScreen(index, bitmapFullSize, false)
                         }
                     }
                 }
@@ -204,12 +204,12 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         }
     }
 
-    private fun showPhotoFullScreen(index: Int, bitmap: Bitmap) {
+    private fun showPhotoFullScreen(index: Int, bitmap: Bitmap, wasEdited: Boolean) {
         photosList.getOrNull(index)?.also { photo ->
             val builder = AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
             val dialogView = layoutInflater.inflate(R.layout.dialog_image_enlarged, null, false)
             val photoView = dialogView.findViewById<PhotoView>(R.id.image)
-            var edited = false
+            var edited = wasEdited
 
             photoView.setImageBitmap(bitmap)
             photoView.setScaleLevels(1F, 5F, 10F)
@@ -245,7 +245,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             // Right swipe - move to previous photo.
             swipeListener.onRightSwipe = Runnable {
                 photosList.getOrNull(index - 1)?.also { prevPhoto ->
-                    showPhotoFullScreen(index - 1, prevPhoto.asBitmap())
+                    showPhotoFullScreen(index - 1, prevPhoto.asBitmap(), edited)
                     sleepAndDismissDialog.run()
                 }
             }
@@ -253,7 +253,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             // Left swipe - move to next photo.
             swipeListener.onLeftSwipe = Runnable {
                 photosList.getOrNull(index + 1)?.also { nextPhoto ->
-                    showPhotoFullScreen(index + 1, nextPhoto.asBitmap())
+                    showPhotoFullScreen(index + 1, nextPhoto.asBitmap(), edited)
                     sleepAndDismissDialog.run()
                 }
             }
