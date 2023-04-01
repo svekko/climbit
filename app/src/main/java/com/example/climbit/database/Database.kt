@@ -1,5 +1,6 @@
 package com.example.climbit.database
 
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
@@ -13,8 +14,13 @@ import com.example.climbit.model.*
         WorkoutSet::class,
         Difficulty::class,
         Grade::class,
+        HoldAnnotation::class,
     ],
-    version = 1,
+    version = 3,
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 2, to = 3),
+    ]
 )
 @TypeConverters(Converters::class)
 abstract class Database : RoomDatabase() {
@@ -32,6 +38,7 @@ abstract class Database : RoomDatabase() {
     abstract fun workoutSetDAO(): WorkoutSetDAO
     abstract fun difficultyDAO(): DifficultyDAO
     abstract fun gradeDAO(): GradeDAO
+    abstract fun holdAnnotationDAO(): HoldAnnotationDAO
 
     fun afterBuild() {
         if (difficultyDAO().getAll().isEmpty()) {

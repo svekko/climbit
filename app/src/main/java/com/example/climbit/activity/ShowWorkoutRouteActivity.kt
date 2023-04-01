@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.climbit.App
 import com.example.climbit.R
 import com.example.climbit.adapter.WorkoutSetArrayAdapter
+import com.example.climbit.model.HoldAnnotation
 import com.example.climbit.model.WorkoutSet
 import com.example.climbit.photo.WorkoutRoutePhoto
 import com.example.climbit.photo.WorkoutRoutePhotos
@@ -42,7 +43,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
     private var photoPath: String? = null
     private var isFinished = false
     private var handler: Handler? = null
-    private val circles: MutableList<IntArray> = ArrayList()
+    private val annotations: MutableList<HoldAnnotation> = ArrayList()
     private val photosList: MutableList<WorkoutRoutePhoto> = ArrayList()
 
     override fun onDestroy() {
@@ -161,6 +162,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                     }
                 }
 
+                drawAnnotations(bitmapThumbnail, photo)
                 count++
             }
         }
@@ -172,22 +174,56 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         }
     }
 
+    private fun drawAnnotations(bitmap: Bitmap, photo: WorkoutRoutePhoto) {
+        val canvas = Canvas(bitmap)
+
+        annotations.clear()
+        annotations.addAll(App.getDB(this).holdAnnotationDAO().getAll(photo.file.name))
+
+        for (annotation in annotations) {
+            val annotationX = annotation.x * bitmap.width
+            val annotationY = annotation.y * bitmap.width
+            val annotationRadius = annotation.radius * bitmap.width
+            val annotationStrokeWidth = annotation.strokeWidth * bitmap.width
+
+            var paint = Paint()
+            paint.color = Color.BLUE
+            paint.style = Paint.Style.FILL
+            paint.blendMode = BlendMode.OVERLAY
+            paint.alpha = 64
+
+            canvas.drawCircle(annotationX, annotationY, annotationRadius, paint)
+
+            paint = Paint()
+            paint.color = Color.BLUE
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = annotationStrokeWidth
+            paint.alpha = 128
+
+            canvas.drawCircle(annotationX, annotationY, annotationRadius + (annotationStrokeWidth / 2), paint)
+        }
+    }
+
     private fun showPhotoFullScreen(index: Int, bitmap: Bitmap) {
         photosList.getOrNull(index)?.also { photo ->
             val builder = AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
             val dialogView = layoutInflater.inflate(R.layout.dialog_image_enlarged, null, false)
-
             val photoView = dialogView.findViewById<PhotoView>(R.id.image)
-            var tmpBitmap: Bitmap? = null
+            var edited = false
 
             photoView.setImageBitmap(bitmap)
             photoView.setScaleLevels(1F, 5F, 10F)
 
-            circles.clear()
+            bitmap.copy(bitmap.config, true).also { tmpBitmap ->
+                photoView.setImageBitmap(tmpBitmap)
+
+                Executors.newSingleThreadExecutor().execute {
+                    drawAnnotations(tmpBitmap, photo)
+                }
+            }
 
             if (!isFinished) {
                 builder.setNeutralButton(R.string.remove, null)
-                builder.setNegativeButton(R.string.save, null)
             }
 
             builder.setPositiveButton(R.string.close, null)
@@ -195,10 +231,9 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             val dialog = builder.create()
             dialog.setView(dialogView)
             dialog.show()
-            dialog.getButton(Dialog.BUTTON_NEGATIVE).visibility = View.GONE
 
             val swipeListener = SwipeListener()
-            val dismissDialog = Runnable {
+            val sleepAndDismissDialog = Runnable {
                 Executors.newSingleThreadExecutor().execute {
                     Thread.sleep(100)
                     runOnUiThread {
@@ -211,7 +246,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             swipeListener.onRightSwipe = Runnable {
                 photosList.getOrNull(index - 1)?.also { prevPhoto ->
                     showPhotoFullScreen(index - 1, prevPhoto.asBitmap())
-                    dismissDialog.run()
+                    sleepAndDismissDialog.run()
                 }
             }
 
@@ -219,7 +254,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             swipeListener.onLeftSwipe = Runnable {
                 photosList.getOrNull(index + 1)?.also { nextPhoto ->
                     showPhotoFullScreen(index + 1, nextPhoto.asBitmap())
-                    dismissDialog.run()
+                    sleepAndDismissDialog.run()
                 }
             }
 
@@ -231,23 +266,21 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                     reloadActivity()
                 }
 
-                dialog.getButton(Dialog.BUTTON_NEGATIVE).setOnClickListener {
-                    if (circles.size > 0) {
-                        photo.file.outputStream().use { out ->
-                            tmpBitmap?.also {
-                                it.compress(Bitmap.CompressFormat.JPEG, 100, out)
-                            }
-                        }
-
+                dialog.getButton(Dialog.BUTTON_POSITIVE).setOnClickListener {
+                    if (edited) {
                         reloadActivity()
+                    } else {
+                        dialog.dismiss()
                     }
                 }
 
                 photoView.setOnPhotoTapListener { _, w, h ->
+                    edited = true
+
                     val zoomRatio = photoView.displayRect.width() / photoView.width
                     val matrix = Matrix()
 
-                    tmpBitmap = bitmap.copy(bitmap.config, true).also { tmpBitmap ->
+                    bitmap.copy(bitmap.config, true).also { tmpBitmap ->
                         photoView.attacher.getSuppMatrix(matrix)
 
                         val circleCx = (tmpBitmap.width * w).roundToInt()
@@ -255,57 +288,45 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                         val circleRadius = min(250F, max(350F / zoomRatio, 50F)).roundToInt()
                         val strokeWidth = max(circleRadius / 5, 15)
 
-                        val canvas = Canvas(tmpBitmap)
-                        var addCircle = true
-                        val newCircles: MutableList<IntArray> = ArrayList()
+                        var addAnnotation = true
+                        val annotationDeleteList: MutableList<Long> = ArrayList()
 
-                        for (circle in circles) {
-                            if (circle.size >= 4) {
-                                val circleAvgRadius = (circleRadius + circle[2]) / 2
+                        // Check for overlap with existing annotation.
+                        // Remove overlapping.
+                        for (annotation in annotations) {
+                            val circleAvgRadius = (circleRadius + (annotation.radius * tmpBitmap.width)) / 2
+                            val annotationX = annotation.x * tmpBitmap.width
+                            val annotationY = annotation.y * tmpBitmap.width
 
-                                if (abs(circle[0] - circleCx) >= circleAvgRadius || abs(circle[1] - circleCy) >= circleAvgRadius) {
-                                    newCircles.add(circle)
-                                } else {
-                                    addCircle = false
-                                }
+                            if (abs(annotationX - circleCx) < circleAvgRadius && abs(annotationY - circleCy) < circleAvgRadius) {
+                                addAnnotation = false
+                                annotationDeleteList.add(annotation.id)
                             }
                         }
 
-                        if (addCircle) {
-                            newCircles.add(intArrayOf(circleCx, circleCy, circleRadius, strokeWidth))
-                        }
-
-                        circles.clear()
-                        circles.addAll(newCircles)
-
-                        for (circle in circles) {
-                            if (circle.size >= 4) {
-                                var paint = Paint()
-                                paint.color = Color.BLUE
-                                paint.style = Paint.Style.FILL
-                                paint.blendMode = BlendMode.OVERLAY
-                                paint.alpha = 64
-
-                                canvas.drawCircle(circle[0].toFloat(), circle[1].toFloat(), circle[2].toFloat(), paint)
-
-                                paint = Paint()
-                                paint.color = Color.BLUE
-                                paint.style = Paint.Style.STROKE
-                                paint.strokeWidth = circle[3].toFloat()
-                                paint.alpha = 128
-
-                                canvas.drawCircle(circle[0].toFloat(), circle[1].toFloat(), circle[2].toFloat() + (circle[3].toFloat() / 2), paint)
+                        Executors.newSingleThreadExecutor().execute {
+                            if (addAnnotation) {
+                                App.getDB(this).holdAnnotationDAO().insert(
+                                    HoldAnnotation(
+                                        0,
+                                        photo.file.name,
+                                        circleRadius.toFloat() / tmpBitmap.width,
+                                        strokeWidth.toFloat() / tmpBitmap.width,
+                                        circleCx.toFloat() / tmpBitmap.width,
+                                        circleCy.toFloat() / tmpBitmap.width,
+                                    )
+                                )
                             }
+
+                            for (annotationID in annotationDeleteList) {
+                                App.getDB(this).holdAnnotationDAO().delete(annotationID)
+                            }
+
+                            drawAnnotations(tmpBitmap, photo)
                         }
 
                         photoView.setImageBitmap(tmpBitmap)
                         photoView.setDisplayMatrix(matrix)
-
-                        if (circles.size > 0) {
-                            dialog.getButton(Dialog.BUTTON_NEGATIVE).visibility = View.VISIBLE
-                        } else {
-                            dialog.getButton(Dialog.BUTTON_NEGATIVE).visibility = View.GONE
-                        }
                     }
                 }
             }
