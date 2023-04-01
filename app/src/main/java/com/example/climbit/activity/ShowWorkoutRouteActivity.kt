@@ -260,7 +260,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
             photoView.setOnSingleFlingListener(swipeListener)
 
-            if (isFinished) {
+            if (!isFinished) {
                 dialog.getButton(Dialog.BUTTON_NEUTRAL).setOnClickListener {
                     photo.file.delete()
                     reloadActivity()
