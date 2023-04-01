@@ -120,6 +120,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                 photos.removeAllViews()
             }
 
+            photosList.clear()
             photosList.addAll(WorkoutRoutePhotos(this, routeID).photos)
 
             for (photo in photosList) {
