@@ -359,11 +359,10 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                         // Check for overlap with existing annotation.
                         // Remove overlapping.
                         for (annotation in annotations) {
-                            val circleAvgRadius = (circleRadius + (annotation.radius * tmpBitmap.width)) / 2
-                            val annotationX = annotation.x * tmpBitmap.width
-                            val annotationY = annotation.y * tmpBitmap.width
+                            val ann = BitmapAnnotation(annotation, tmpBitmap)
+                            val circleAvgRadius = (circleRadius + ann.radius()) / 2
 
-                            if (abs(annotationX - circleCx) < circleAvgRadius && abs(annotationY - circleCy) < circleAvgRadius) {
+                            if (abs(ann.x() - circleCx) < circleAvgRadius && abs(ann.y() - circleCy) < circleAvgRadius) {
                                 addAnnotation = false
                                 annotationDeleteList.add(annotation.id)
                             }
