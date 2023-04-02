@@ -176,9 +176,27 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         }
     }
 
+    class BitmapAnnotation(private val annotation: HoldAnnotation, private val bitmap: Bitmap) {
+        fun x(): Float {
+            return annotation.x * bitmap.width
+        }
+
+        fun y(): Float {
+            return annotation.y * bitmap.width
+        }
+
+        fun radius(): Float {
+            return annotation.radius * bitmap.width
+        }
+
+        fun strokeWidth(): Float {
+            return annotation.strokeWidth * bitmap.width
+        }
+    }
+
     private fun drawAnnotations(bitmap: Bitmap, photo: WorkoutRoutePhoto) {
-        val maskBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
-        val maskCanvas = Canvas(maskBitmap)
+        var maskBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        var maskCanvas = Canvas(maskBitmap)
 
         annotations.clear()
         annotations.addAll(App.getDB(this).holdAnnotationDAO().getAll(photo.file.name))
@@ -192,14 +210,12 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
         // Remove masked from the parts where annotations are located.
         for (annotation in annotations) {
-            val annotationX = annotation.x * bitmap.width
-            val annotationY = annotation.y * bitmap.width
-            val annotationRadius = annotation.radius * bitmap.width
+            val ann = BitmapAnnotation(annotation, bitmap)
 
             val paint = Paint()
             paint.color = Color.WHITE
 
-            maskCanvas.drawCircle(annotationX, annotationY, annotationRadius, paint)
+            maskCanvas.drawCircle(ann.x(), ann.y(), ann.radius(), paint)
         }
 
         val finalCanvas = Canvas(bitmap)
@@ -208,21 +224,32 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         maskPaint.blendMode = BlendMode.DARKEN
         finalCanvas.drawBitmap(maskBitmap, 0F, 0F, maskPaint)
 
-        // Draw stroke on top of the final image.
+        maskBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        maskCanvas = Canvas(maskBitmap)
+
+        // Draw stroke pt. 1 (draw outer circle).
         for (annotation in annotations) {
-            val annotationX = annotation.x * bitmap.width
-            val annotationY = annotation.y * bitmap.width
-            val annotationRadius = annotation.radius * bitmap.width
-            val annotationStrokeWidth = annotation.strokeWidth * bitmap.width
+            val ann = BitmapAnnotation(annotation, bitmap)
 
             val paint = Paint()
             paint.color = Color.WHITE
-            paint.style = Paint.Style.STROKE
-            paint.strokeWidth = annotationStrokeWidth
-            paint.alpha = 175
 
-            finalCanvas.drawCircle(annotationX, annotationY, annotationRadius + (annotationStrokeWidth / 2), paint)
+            maskCanvas.drawCircle(ann.x(), ann.y(), ann.radius() + ann.strokeWidth(), paint)
         }
+
+        // Draw stroke pt. 2 (draw inner circle).
+        for (annotation in annotations) {
+            val ann = BitmapAnnotation(annotation, bitmap)
+
+            val paint = Paint()
+            paint.color = Color.BLACK
+
+            maskCanvas.drawCircle(ann.x(), ann.y(), ann.radius(), paint)
+        }
+
+        maskPaint.blendMode = BlendMode.SCREEN
+        maskPaint.alpha = 175
+        finalCanvas.drawBitmap(maskBitmap, 0F, 0F, maskPaint)
     }
 
     private fun showPhotoFullScreen(index: Int, bitmap: Bitmap, wasEdited: Boolean) {
