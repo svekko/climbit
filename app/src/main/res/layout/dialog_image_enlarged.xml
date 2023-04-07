@@ -37,21 +37,6 @@
             android:visibility="gone">
 
             <TextView
-                android:id="@+id/delete"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="5dp"
-                android:padding="10dp"
-                android:text="@string/delete"
-                android:textColor="@color/red_400"
-                android:textSize="8pt" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1px"
-                android:background="@color/white_200" />
-
-            <TextView
                 android:id="@+id/toggle_mask"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -59,6 +44,16 @@
                 android:padding="10dp"
                 android:text="@string/toggle_mask"
                 android:textColor="@color/white_200"
+                android:textSize="8pt" />
+
+            <TextView
+                android:id="@+id/delete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="5dp"
+                android:padding="10dp"
+                android:text="@string/delete"
+                android:textColor="@color/red_400"
                 android:textSize="8pt" />
         </LinearLayout>
     </LinearLayout>

@@ -275,31 +275,33 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                 }
             }
 
-            if (isFinished) {
-                menuView.visibility = View.GONE
-            } else {
-                menuView.setOnClickListener {
-                    menuContentView.visibility = if (menuContentView.visibility == View.GONE) {
-                        View.VISIBLE
-                    } else {
-                        View.GONE
-                    }
-                }
+            val deleteButton = menuContentView.findViewById<TextView>(R.id.delete)
 
-                menuContentView.findViewById<TextView>(R.id.delete).setOnClickListener {
+            if (isFinished) {
+                deleteButton.visibility = View.GONE
+            } else {
+                deleteButton.setOnClickListener {
                     photo.file.delete()
                     reloadActivity()
                 }
+            }
 
-                menuContentView.findViewById<TextView>(R.id.toggle_mask).setOnClickListener {
-                    Executors.newSingleThreadExecutor().execute {
-                        bitmap.copy(bitmap.config, true)?.also { tmpBitmap ->
-                            maskEnabled = !maskEnabled
-                            drawAnnotations(tmpBitmap, photo)
+            menuView.setOnClickListener {
+                menuContentView.visibility = if (menuContentView.visibility == View.GONE) {
+                    View.VISIBLE
+                } else {
+                    View.GONE
+                }
+            }
 
-                            runOnUiThread {
-                                photoView.setImageBitmap(tmpBitmap)
-                            }
+            menuContentView.findViewById<TextView>(R.id.toggle_mask).setOnClickListener {
+                Executors.newSingleThreadExecutor().execute {
+                    bitmap.copy(bitmap.config, true)?.also { tmpBitmap ->
+                        maskEnabled = !maskEnabled
+                        drawAnnotations(tmpBitmap, photo)
+
+                        runOnUiThread {
+                            photoView.setImageBitmap(tmpBitmap)
                         }
                     }
                 }
@@ -339,17 +341,23 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
             photoView.setOnSingleFlingListener(swipeListener)
 
-            if (!isFinished) {
+            photoView.setOnScaleChangeListener { _, _, _ ->
+                menuContentView.visibility = View.GONE
+            }
+
+            if (isFinished) {
+                photoView.setOnPhotoTapListener { _, _, _ ->
+                    if (menuContentView.visibility == View.VISIBLE) {
+                        menuContentView.visibility = View.GONE
+                    }
+                }
+            } else {
                 dialog.getButton(Dialog.BUTTON_POSITIVE).setOnClickListener {
                     if (edited) {
                         reloadActivity()
                     } else {
                         dialog.dismiss()
                     }
-                }
-
-                photoView.setOnScaleChangeListener { _, _, _ ->
-                    menuContentView.visibility = View.GONE
                 }
 
                 photoView.setOnPhotoTapListener { _, w, h ->
