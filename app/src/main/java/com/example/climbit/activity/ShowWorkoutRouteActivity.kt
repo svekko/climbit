@@ -259,6 +259,8 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             val builder = AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
             val dialogView = layoutInflater.inflate(R.layout.dialog_image_enlarged, null, false)
             val photoView = dialogView.findViewById<PhotoView>(R.id.image)
+            val menuView = dialogView.findViewById<ImageView>(R.id.menu)
+            val menuContentView = dialogView.findViewById<LinearLayout>(R.id.menu_content)
             var edited = wasEdited
 
             photoView.setScaleLevels(1F, 5F, 10F)
@@ -273,9 +275,34 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                 }
             }
 
-            if (!isFinished) {
-                builder.setNeutralButton(R.string.remove, null)
-                builder.setNegativeButton(R.string.toggle_mask, null)
+            if (isFinished) {
+                menuView.visibility = View.GONE
+            } else {
+                menuView.setOnClickListener {
+                    menuContentView.visibility = if (menuContentView.visibility == View.GONE) {
+                        View.VISIBLE
+                    } else {
+                        View.GONE
+                    }
+                }
+
+                menuContentView.findViewById<TextView>(R.id.delete).setOnClickListener {
+                    photo.file.delete()
+                    reloadActivity()
+                }
+
+                menuContentView.findViewById<TextView>(R.id.toggle_mask).setOnClickListener {
+                    Executors.newSingleThreadExecutor().execute {
+                        bitmap.copy(bitmap.config, true)?.also { tmpBitmap ->
+                            maskEnabled = !maskEnabled
+                            drawAnnotations(tmpBitmap, photo)
+
+                            runOnUiThread {
+                                photoView.setImageBitmap(tmpBitmap)
+                            }
+                        }
+                    }
+                }
             }
 
             builder.setPositiveButton(R.string.close, null)
@@ -313,11 +340,6 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             photoView.setOnSingleFlingListener(swipeListener)
 
             if (!isFinished) {
-                dialog.getButton(Dialog.BUTTON_NEUTRAL).setOnClickListener {
-                    photo.file.delete()
-                    reloadActivity()
-                }
-
                 dialog.getButton(Dialog.BUTTON_POSITIVE).setOnClickListener {
                     if (edited) {
                         reloadActivity()
@@ -326,20 +348,16 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                     }
                 }
 
-                dialog.getButton(Dialog.BUTTON_NEGATIVE).setOnClickListener {
-                    Executors.newSingleThreadExecutor().execute {
-                        bitmap.copy(bitmap.config, true)?.also { tmpBitmap ->
-                            maskEnabled = !maskEnabled
-                            drawAnnotations(tmpBitmap, photo)
-
-                            runOnUiThread {
-                                photoView.setImageBitmap(tmpBitmap)
-                            }
-                        }
-                    }
+                photoView.setOnScaleChangeListener { _, _, _ ->
+                    menuContentView.visibility = View.GONE
                 }
 
                 photoView.setOnPhotoTapListener { _, w, h ->
+                    if (menuContentView.visibility == View.VISIBLE) {
+                        menuContentView.visibility = View.GONE
+                        return@setOnPhotoTapListener
+                    }
+
                     edited = true
 
                     val zoomRatio = photoView.displayRect.width() / photoView.width
