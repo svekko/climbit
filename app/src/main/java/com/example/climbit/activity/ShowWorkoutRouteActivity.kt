@@ -292,6 +292,8 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             }
 
             menuContentView.findViewById<TextView>(R.id.toggle_mask).setOnClickListener {
+                edited = true
+
                 Executors.newSingleThreadExecutor().execute {
                     bitmap.copy(bitmap.config, true)?.also { tmpBitmap ->
                         App.setMaskEnabled(this, !App.getMaskEnabled(this))
