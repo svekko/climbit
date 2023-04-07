@@ -1,5 +1,6 @@
 package com.example.climbit
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import androidx.room.Room
@@ -10,6 +11,9 @@ class App : Application() {
         @Volatile
         private lateinit var db: Database
 
+        private var sharedPreferenceID = "climbItPreferences"
+        private var sharedPreferenceMaskEnabled = "maskEnabled"
+
         fun getDB(ctx: Context): Database {
             synchronized(this) {
                 if (!::db.isInitialized) {
@@ -19,6 +23,17 @@ class App : Application() {
 
                 return db
             }
+        }
+
+        @SuppressLint("ApplySharedPref")
+        fun setMaskEnabled(ctx: Context, v: Boolean) {
+            val pref = ctx.getSharedPreferences(sharedPreferenceID, 0)
+            pref.edit().putBoolean(sharedPreferenceMaskEnabled, v).commit()
+        }
+
+        fun getMaskEnabled(ctx: Context): Boolean {
+            val pref = ctx.getSharedPreferences(sharedPreferenceID, 0)
+            return pref.getBoolean(sharedPreferenceMaskEnabled, true)
         }
     }
 

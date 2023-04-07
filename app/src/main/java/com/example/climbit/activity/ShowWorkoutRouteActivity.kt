@@ -45,7 +45,6 @@ class ShowWorkoutRouteActivity : BaseActivity() {
     private var handler: Handler? = null
     private val annotations: MutableList<HoldAnnotation> = ArrayList()
     private val photosList: MutableList<WorkoutRoutePhoto> = ArrayList()
-    private var maskEnabled = true
 
     override fun onDestroy() {
         deleteTempPhotoOnPhotoPath(true)
@@ -202,7 +201,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         annotations.addAll(App.getDB(this).holdAnnotationDAO().getAll(photo.file.name))
 
         // Skip drawing mask layer if there are no annotations.
-        if (annotations.size > 0 && maskEnabled) {
+        if (annotations.size > 0 && App.getMaskEnabled(this)) {
             val maskBG = Paint()
             maskBG.setARGB(85, 0, 0, 0)
             maskCanvas.drawPaint(maskBG)
@@ -254,8 +253,6 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
     private fun showPhotoFullScreen(index: Int, bitmap: Bitmap, wasEdited: Boolean) {
         photosList.getOrNull(index)?.also { photo ->
-            maskEnabled = true
-
             val builder = AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
             val dialogView = layoutInflater.inflate(R.layout.dialog_image_enlarged, null, false)
             val photoView = dialogView.findViewById<PhotoView>(R.id.image)
@@ -297,7 +294,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             menuContentView.findViewById<TextView>(R.id.toggle_mask).setOnClickListener {
                 Executors.newSingleThreadExecutor().execute {
                     bitmap.copy(bitmap.config, true)?.also { tmpBitmap ->
-                        maskEnabled = !maskEnabled
+                        App.setMaskEnabled(this, !App.getMaskEnabled(this))
                         drawAnnotations(tmpBitmap, photo)
 
                         runOnUiThread {
