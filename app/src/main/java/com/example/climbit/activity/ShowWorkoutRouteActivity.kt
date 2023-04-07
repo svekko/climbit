@@ -447,11 +447,9 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         val timeStamp = DateFormat.format("yyyyMMdd_HHmmss", Date()).toString()
         val dir = WorkoutRoutePhotos.getPhotosDir()
 
-        val file = File(dir.toString(), "${routeID}___${timeStamp}.jpg")
-        file.createNewFile()
-
-        photoPath = file.absolutePath
-        return file
+        return File.createTempFile("${routeID}___${timeStamp}", ".jpg", dir).also {
+            photoPath = it.absolutePath
+        }
     }
 
     private fun showRestTimer(lastSet: WorkoutSet) {
