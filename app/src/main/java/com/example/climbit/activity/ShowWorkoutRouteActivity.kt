@@ -97,9 +97,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         initTakePhotoListener()
         populateSetsListView()
 
-        Executors.newSingleThreadExecutor().execute {
-            loadPhotos()
-        }
+        loadPhotos()
     }
 
     private fun reloadActivity() {

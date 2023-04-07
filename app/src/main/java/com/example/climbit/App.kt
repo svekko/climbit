@@ -17,7 +17,10 @@ class App : Application() {
         fun getDB(ctx: Context): Database {
             synchronized(this) {
                 if (!::db.isInitialized) {
-                    db = Room.databaseBuilder(ctx, Database::class.java, "climb-it").build()
+                    db = Room.databaseBuilder(ctx, Database::class.java, "climb-it")
+                        .allowMainThreadQueries()
+                        .build()
+
                     db.afterBuild()
                 }
 
