@@ -77,7 +77,7 @@ class WorkoutRouteArrayAdapter(act: BaseActivity, finished: Boolean, list: List<
             holder.deleteButton.setOnClickListener {
                 activity.withConfirmation {
                     Executors.newSingleThreadExecutor().execute {
-                        WorkoutRoutePhotos(activity, route.workoutRoute.id).deleteAll()
+                        WorkoutRoutePhotos(route.workoutRoute.id).deleteAll()
                         App.getDB(activity).workoutRouteDAO().delete(route.workoutRoute.id)
 
                         activity.runOnUiThread {

@@ -6,7 +6,6 @@ import android.content.Intent
 import android.graphics.*
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.os.Handler
 import android.text.format.DateFormat
 import android.view.View
@@ -120,7 +119,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             }
 
             photosList.clear()
-            photosList.addAll(WorkoutRoutePhotos(this, routeID).photos)
+            photosList.addAll(WorkoutRoutePhotos(routeID).photos)
 
             for (photo in photosList) {
                 val bitmapThumbnail = photo.asBitmap(125.0F)
@@ -446,11 +445,13 @@ class ShowWorkoutRouteActivity : BaseActivity() {
     @Throws(IOException::class)
     private fun createPhotoFile(): File {
         val timeStamp = DateFormat.format("yyyyMMdd_HHmmss", Date()).toString()
-        val dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val dir = WorkoutRoutePhotos.getPhotosDir()
 
-        return File.createTempFile("${routeID}___${timeStamp}", ".jpg", dir).also {
-            photoPath = it.absolutePath
-        }
+        val file = File(dir.toString(), "${routeID}___${timeStamp}.jpg")
+        file.createNewFile()
+
+        photoPath = file.absolutePath
+        return file
     }
 
     private fun showRestTimer(lastSet: WorkoutSet) {

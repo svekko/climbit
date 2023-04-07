@@ -68,7 +68,7 @@ class WorkoutArrayAdapter(act: BaseActivity, list: ArrayList<Workout>) : Recycle
                         val routes = db.workoutRouteDAO().getRoutesAndSets(workout.id)
 
                         for (route in routes) {
-                            WorkoutRoutePhotos(activity, route.workoutRoute.id).deleteAll()
+                            WorkoutRoutePhotos(route.workoutRoute.id).deleteAll()
                         }
 
                         db.workoutDAO().delete(workout.id)
