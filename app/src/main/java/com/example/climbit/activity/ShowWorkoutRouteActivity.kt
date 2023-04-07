@@ -344,6 +344,14 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                 menuContentView.visibility = View.GONE
             }
 
+            dialog.getButton(Dialog.BUTTON_POSITIVE).setOnClickListener {
+                if (edited) {
+                    reloadActivity()
+                } else {
+                    dialog.dismiss()
+                }
+            }
+
             if (isFinished) {
                 photoView.setOnPhotoTapListener { _, _, _ ->
                     if (menuContentView.visibility == View.VISIBLE) {
@@ -351,14 +359,6 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                     }
                 }
             } else {
-                dialog.getButton(Dialog.BUTTON_POSITIVE).setOnClickListener {
-                    if (edited) {
-                        reloadActivity()
-                    } else {
-                        dialog.dismiss()
-                    }
-                }
-
                 photoView.setOnPhotoTapListener { _, w, h ->
                     if (menuContentView.visibility == View.VISIBLE) {
                         menuContentView.visibility = View.GONE
