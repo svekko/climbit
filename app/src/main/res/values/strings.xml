@@ -37,6 +37,7 @@
     <string name="set_n">Set #%1$d</string>
     <string name="save">Save</string>
     <string name="menu">Menu</string>
+    <string name="open_externally">Open externally</string>
     <string name="toggle_mask">Toggle mask</string>
     <plurals name="n_attempts">
         <item quantity="one">%1$d attempt</item>

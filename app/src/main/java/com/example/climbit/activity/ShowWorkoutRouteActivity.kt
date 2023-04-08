@@ -303,6 +303,20 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                 }
             }
 
+            menuContentView.findViewById<TextView>(R.id.open_externally).setOnClickListener {
+                menuContentView.visibility = View.GONE
+
+                val uri = FileProvider.getUriForFile(this, "com.example.android.fileprovider", photo.file)
+                val intent = Intent();
+
+                intent.action = Intent.ACTION_VIEW
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                intent.setDataAndType(uri, "image/*");
+
+                startActivity(intent);
+            }
+
             builder.setPositiveButton(R.string.close, null)
 
             val dialog = builder.create()
