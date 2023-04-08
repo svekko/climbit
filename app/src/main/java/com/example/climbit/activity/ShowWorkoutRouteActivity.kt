@@ -124,55 +124,59 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
         photosView.removeAllViews()
 
-        for (photo in photosList) {
-            val bitmapThumbnail = photo.asBitmap(125.0F)
-            val index = count
-            val imgView = ImageView(this)
-            val cardView = CardView(this)
+        Executors.newSingleThreadExecutor().execute {
+            for (photo in photosList) {
+                val bitmapThumbnail = photo.asBitmap(125.0F)
+                val index = count
+                val imgView = ImageView(this)
+                val cardView = CardView(this)
 
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT,
-            )
+                val params = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                )
 
-            if (count != 0) {
-                params.leftMargin = 25
-            }
+                if (count != 0) {
+                    params.leftMargin = 25
+                }
 
-            imgView.adjustViewBounds = true
-            imgView.setImageBitmap(bitmapThumbnail)
-
-            runOnUiThread {
-                val animation = AnimationUtils.loadAnimation(this, androidx.appcompat.R.anim.abc_fade_in)
-                animation.startOffset = 0
-                animation.duration = 500
-
-                cardView.addView(imgView)
-                cardView.radius = 20.0F
-                cardView.layoutParams = params
-
-                photosView.addView(cardView)
-                imgView.startAnimation(animation)
-            }
-
-            backgroundRunner.execute {
-                val bitmapFullSize = photo.asBitmap()
+                imgView.adjustViewBounds = true
+                imgView.setImageBitmap(bitmapThumbnail)
 
                 runOnUiThread {
-                    imgView.setOnClickListener {
-                        showPhotoFullScreen(index, bitmapFullSize, false)
+                    val animation = AnimationUtils.loadAnimation(this, androidx.appcompat.R.anim.abc_fade_in)
+                    animation.startOffset = 0
+                    animation.duration = 500
+
+                    cardView.addView(imgView)
+                    cardView.radius = 20.0F
+                    cardView.layoutParams = params
+
+                    photosView.addView(cardView)
+                    imgView.startAnimation(animation)
+                }
+
+                backgroundRunner.execute {
+                    val bitmapFullSize = photo.asBitmap()
+
+                    runOnUiThread {
+                        imgView.setOnClickListener {
+                            showPhotoFullScreen(index, bitmapFullSize, false)
+                        }
                     }
                 }
+
+                drawAnnotations(bitmapThumbnail, photo)
+                count++
             }
 
-            drawAnnotations(bitmapThumbnail, photo)
-            count++
-        }
-
-        photosScroll.visibility = if (count == 0) {
-            View.GONE
-        } else {
-            View.VISIBLE
+            runOnUiThread {
+                photosScroll.visibility = if (count == 0) {
+                    View.GONE
+                } else {
+                    View.VISIBLE
+                }
+            }
         }
     }
 
