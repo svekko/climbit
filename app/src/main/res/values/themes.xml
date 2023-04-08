@@ -11,6 +11,7 @@
         <item name="colorOnSecondary">@color/blue_700</item>
         <!-- Misc colors. -->
         <item name="colorContainer">@color/white_200</item>
+        <item name="colorSecondaryContainer">@color/white_300</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->

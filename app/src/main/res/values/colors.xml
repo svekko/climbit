@@ -3,9 +3,11 @@
     <color name="blue_200">#91B8E1</color>
     <color name="blue_500">#4F84CF</color>
     <color name="blue_700">#304F9C</color>
-    <color name="black">#FF000000</color>
-    <color name="gray_800">#FF222222</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="gray_800">#222222</color>
+    <color name="gray_900">#1A1A1A</color>
+    <color name="white">#FFFFFF</color>
     <color name="white_200">#EDEDED</color>
+    <color name="white_300">#E2E2E2</color>
     <color name="red_400">#C45454</color>
 </resources>
