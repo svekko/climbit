@@ -165,10 +165,10 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             count++
         }
 
-        if (count == 0) {
-            photosScroll.visibility = View.GONE
+        photosScroll.visibility = if (count == 0) {
+            View.GONE
         } else {
-            photosScroll.visibility = View.VISIBLE
+            View.VISIBLE
         }
     }
 
