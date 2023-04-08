@@ -21,7 +21,10 @@ class ListWorkoutsActivity : BaseActivity() {
 
         findViewById<Button>(R.id.load_more).setOnClickListener {
             page++
-            populateListView(page)
+
+            Executors.newSingleThreadExecutor().execute {
+                populateListView(page)
+            }
         }
     }
 
@@ -34,25 +37,25 @@ class ListWorkoutsActivity : BaseActivity() {
 
     @SuppressLint("NotifyDataSetChanged")
     private fun populateListView(p: Int) {
-        Executors.newSingleThreadExecutor().execute {
-            val workouts = App.getDB(this).workoutDAO().getAll(p)
+        val workouts = App.getDB(this).workoutDAO().getAll(p)
 
-            runOnUiThread {
-                if (page == 1) {
-                    adapter = WorkoutArrayAdapter(this, workouts as ArrayList<Workout>)
-                    findViewById<RecyclerView>(R.id.list).adapter = adapter
-                }
+        runOnUiThread {
+            if (page == 1) {
+                adapter = WorkoutArrayAdapter(this, workouts as ArrayList<Workout>)
+                findViewById<RecyclerView>(R.id.list).adapter = adapter
+            }
 
-                if (page != 1) {
-                    adapter?.also {
-                        it.append(workouts as ArrayList<Workout>)
-                        it.notifyDataSetChanged()
-                    }
+            if (page != 1) {
+                adapter?.also {
+                    it.append(workouts as ArrayList<Workout>)
+                    it.notifyDataSetChanged()
                 }
+            }
 
-                if (workouts.size < 20) {
-                    findViewById<Button>(R.id.load_more).visibility = View.GONE
-                }
+            findViewById<Button>(R.id.load_more).visibility = if (workouts.size < 10) {
+                View.GONE
+            } else {
+                View.VISIBLE
             }
         }
     }

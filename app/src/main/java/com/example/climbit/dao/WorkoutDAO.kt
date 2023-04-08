@@ -8,7 +8,7 @@ import com.example.climbit.model.Workout
 
 @Dao
 interface WorkoutDAO {
-    @Query("SELECT * FROM workout ORDER BY date_started DESC LIMIT 20 OFFSET (20 * (:page - 1))")
+    @Query("SELECT * FROM workout ORDER BY date_started DESC LIMIT 10 OFFSET (10 * (:page - 1))")
     fun getAll(page: Int): List<Workout>
 
     @Query("SELECT * FROM workout WHERE id = :id")

@@ -61,46 +61,41 @@ class ShowWorkoutActivity : BaseActivity() {
     override fun onResume() {
         super.onResume()
 
-        workoutID?.also {
-            Executors.newSingleThreadExecutor().execute {
-                workout = App.getDB(this).workoutDAO().get(it).also { workout ->
-                    routes = App.getDB(this).workoutRouteDAO().getRoutesAndSets(workout.id)
+        workoutID?.also { workoutID ->
+            workout = App.getDB(this).workoutDAO().get(workoutID).also { workout ->
+                routes = App.getDB(this).workoutRouteDAO().getRoutesAndSets(workout.id)
 
-                    runOnUiThread {
-                        findViewById<TextView>(R.id.title).text = workout.title
+                findViewById<TextView>(R.id.title).text = workout.title
 
-                        workout.dateFinished?.also {
-                            findViewById<Button>(R.id.add_route).visibility = View.GONE
-                            findViewById<Button>(R.id.finish).visibility = View.GONE
-                        }
+                routes?.also { routes ->
+                    val adapter = WorkoutRouteArrayAdapter(this, workout.dateFinished != null, routes)
+                    val list = findViewById<RecyclerView>(R.id.routes_list)
+                    list.adapter = adapter
+                }
 
-                        routes?.also { routes ->
-                            val adapter = WorkoutRouteArrayAdapter(this, workout.dateFinished != null, routes)
-                            val list = findViewById<RecyclerView>(R.id.routes_list)
-                            list.adapter = adapter
-                        }
+                var subtitle: String
 
-                        workout.dateFinished?.let {
-                            val subtitle = "${TimeUtil.formatDatetime(workout.dateStarted)} - ${TimeUtil.formatDatetime(it)}"
-                            findViewById<TextView>(R.id.subtitle).text = subtitle
-                            findViewById<TextView>(R.id.timer).visibility = View.GONE
-                        } ?: run {
-                            val subtitle = "${getString(R.string.workout_timer)}:"
-                            findViewById<TextView>(R.id.subtitle).text = subtitle
+                workout.dateFinished?.let {
+                    subtitle = "${TimeUtil.formatDatetime(workout.dateStarted)} - ${TimeUtil.formatDatetime(it)}"
+                    findViewById<TextView>(R.id.subtitle).text = subtitle
+                    findViewById<TextView>(R.id.timer).visibility = View.GONE
+                    findViewById<Button>(R.id.add_route).visibility = View.GONE
+                    findViewById<Button>(R.id.finish).visibility = View.GONE
+                } ?: run {
+                    subtitle = "${getString(R.string.workout_timer)}:"
+                    findViewById<TextView>(R.id.subtitle).text = subtitle
 
-                            handler?.also {
-                                it.removeCallbacksAndMessages(null)
+                    handler?.also {
+                        it.removeCallbacksAndMessages(null)
+                    }
+
+                    handler = Handler(mainLooper).also {
+                        it.post(object : Runnable {
+                            override fun run() {
+                                showTimer()
+                                it.postDelayed(this, 1000)
                             }
-
-                            handler = Handler(mainLooper).also {
-                                it.post(object : Runnable {
-                                    override fun run() {
-                                        showTimer()
-                                        it.postDelayed(this, 1000)
-                                    }
-                                })
-                            }
-                        }
+                        })
                     }
                 }
             }
