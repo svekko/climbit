@@ -13,9 +13,8 @@ import com.example.climbit.App
 import com.example.climbit.R
 import com.example.climbit.activity.BaseActivity
 import com.example.climbit.activity.ShowWorkoutRouteActivity
+import com.example.climbit.livedata.PhotosDataModel
 import com.example.climbit.model.WorkoutRouteWithSets
-import com.example.climbit.photo.WorkoutRoutePhotos
-import java.util.concurrent.Executors
 
 class WorkoutRouteArrayAdapter(act: BaseActivity, finished: Boolean, list: List<WorkoutRouteWithSets>) : RecyclerView.Adapter<WorkoutRouteArrayAdapter.ViewHolder>() {
     private val routes = list
@@ -76,15 +75,11 @@ class WorkoutRouteArrayAdapter(act: BaseActivity, finished: Boolean, list: List<
 
             holder.deleteButton.setOnClickListener {
                 activity.withConfirmation {
-                    Executors.newSingleThreadExecutor().execute {
-                        WorkoutRoutePhotos(route.workoutRoute.id).deleteAll()
-                        App.getDB(activity).workoutRouteDAO().delete(route.workoutRoute.id)
+                    PhotosDataModel(route.workoutRoute.id).deleteAll(activity)
+                    App.getDB(activity).workoutRouteDAO().delete(route.workoutRoute.id)
 
-                        activity.runOnUiThread {
-                            activity.finish()
-                            activity.startActivity(activity.intent)
-                        }
-                    }
+                    activity.finish()
+                    activity.startActivity(activity.intent)
                 }
             }
         }

@@ -20,10 +20,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.climbit.App
 import com.example.climbit.R
 import com.example.climbit.adapter.WorkoutSetArrayAdapter
+import com.example.climbit.livedata.PhotosDataModel
 import com.example.climbit.model.HoldAnnotation
 import com.example.climbit.model.WorkoutSet
 import com.example.climbit.photo.WorkoutRoutePhoto
-import com.example.climbit.photo.WorkoutRoutePhotos
 import com.example.climbit.view.SwipeListener
 import com.github.chrisbanes.photoview.PhotoView
 import java.io.File
@@ -97,7 +97,14 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         initTakePhotoListener()
         populateSetsListView()
 
-        loadPhotos()
+        routeID?.also {
+            PhotosDataModel(it).getPhotos().observe(this) { photos ->
+                photosList.clear()
+                photosList.addAll(photos)
+
+                loadPhotos()
+            }
+        }
     }
 
     private fun reloadActivity() {
@@ -107,62 +114,55 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
     private fun loadPhotos() {
         var count = 0
-        val photos = findViewById<LinearLayout>(R.id.images)
+        val photosView = findViewById<LinearLayout>(R.id.images)
         val photosScroll = findViewById<HorizontalScrollView>(R.id.images_scroll)
         val backgroundRunner = Executors.newFixedThreadPool(3)
 
-        routeID?.also { routeID ->
-            runOnUiThread {
-                photos.removeAllViews()
+        photosView.removeAllViews()
+
+        for (photo in photosList) {
+            val bitmapThumbnail = photo.asBitmap(125.0F)
+            val index = count
+            val imgView = ImageView(this)
+            val cardView = CardView(this)
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.MATCH_PARENT,
+            )
+
+            if (count != 0) {
+                params.leftMargin = 25
             }
 
-            photosList.clear()
-            photosList.addAll(WorkoutRoutePhotos(routeID).photos)
+            imgView.adjustViewBounds = true
+            imgView.setImageBitmap(bitmapThumbnail)
 
-            for (photo in photosList) {
-                val bitmapThumbnail = photo.asBitmap(125.0F)
-                val index = count
-                val imgView = ImageView(this)
-                val cardView = CardView(this)
+            runOnUiThread {
+                val animation = AnimationUtils.loadAnimation(this, androidx.appcompat.R.anim.abc_fade_in)
+                animation.startOffset = 0
+                animation.duration = 500
 
-                val params = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                )
+                cardView.addView(imgView)
+                cardView.radius = 20.0F
+                cardView.layoutParams = params
 
-                if (count != 0) {
-                    params.leftMargin = 25
-                }
+                photosView.addView(cardView)
+                imgView.startAnimation(animation)
+            }
 
-                imgView.adjustViewBounds = true
-                imgView.setImageBitmap(bitmapThumbnail)
+            backgroundRunner.execute {
+                val bitmapFullSize = photo.asBitmap()
 
                 runOnUiThread {
-                    val animation = AnimationUtils.loadAnimation(this, androidx.appcompat.R.anim.abc_fade_in)
-                    animation.startOffset = 0
-                    animation.duration = 500
-
-                    cardView.addView(imgView)
-                    cardView.radius = 20.0F
-                    cardView.layoutParams = params
-
-                    photos.addView(cardView)
-                    imgView.startAnimation(animation)
-                }
-
-                backgroundRunner.execute {
-                    val bitmapFullSize = photo.asBitmap()
-
-                    runOnUiThread {
-                        imgView.setOnClickListener {
-                            showPhotoFullScreen(index, bitmapFullSize, false)
-                        }
+                    imgView.setOnClickListener {
+                        showPhotoFullScreen(index, bitmapFullSize, false)
                     }
                 }
-
-                drawAnnotations(bitmapThumbnail, photo)
-                count++
             }
+
+            drawAnnotations(bitmapThumbnail, photo)
+            count++
         }
 
         if (count == 0) {
@@ -457,7 +457,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
     @Throws(IOException::class)
     private fun createPhotoFile(): File {
         val timeStamp = DateFormat.format("yyyyMMdd_HHmmss", Date()).toString()
-        val dir = WorkoutRoutePhotos.getPhotosDir()
+        val dir = PhotosDataModel.getPhotosDir()
 
         return File.createTempFile("${routeID}___${timeStamp}", ".jpg", dir).also {
             photoPath = it.absolutePath
@@ -485,74 +485,70 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
     @SuppressLint("SetTextI18n")
     private fun populateSetsListView() {
-        routeID?.also {
-            Executors.newSingleThreadExecutor().execute {
-                val db = App.getDB(this)
-                val sets = db.workoutSetDAO().getAll(it)
-                val route = db.workoutRouteDAO().get(it)
-                val workout = db.workoutDAO().get(route.workoutID)
-                val lastSet = db.workoutSetDAO().getLastForWorkout(route.workoutID)
-                val difficulty = db.difficultyDAO().get(route.difficultyID)
-                val workoutFinished = workout.dateFinished != null
-                val grade = route.gradeID?.let {
-                    db.gradeDAO().get(it)
-                }
+        routeID?.also { routeID ->
+            val db = App.getDB(this)
+            val sets = db.workoutSetDAO().getAll(routeID)
+            val route = db.workoutRouteDAO().get(routeID)
+            val workout = db.workoutDAO().get(route.workoutID)
+            val lastSet = db.workoutSetDAO().getLastForWorkout(route.workoutID)
+            val difficulty = db.difficultyDAO().get(route.difficultyID)
+            val workoutFinished = workout.dateFinished != null
+            val grade = route.gradeID?.let { g ->
+                db.gradeDAO().get(g)
+            }
 
-                workoutID = route.workoutID
+            workoutID = route.workoutID
 
-                if (workoutFinished || (sets.isNotEmpty() && sets[0].finished)) {
-                    isFinished = true
-                }
+            if (workoutFinished || (sets.isNotEmpty() && sets[0].finished)) {
+                isFinished = true
+            }
 
-                runOnUiThread {
-                    // Update rest timer every second.
-                    lastSet?.also { set ->
-                        if (isFinished) {
-                            findViewById<TextView>(R.id.timer).visibility = View.GONE
-                            findViewById<TextView>(R.id.timer_title).visibility = View.GONE
-                        } else {
-                            handler?.also {
-                                it.removeCallbacksAndMessages(null)
+            // Update rest timer every second.
+            lastSet?.also { set ->
+                if (isFinished) {
+                    findViewById<TextView>(R.id.timer).visibility = View.GONE
+                    findViewById<TextView>(R.id.timer_title).visibility = View.GONE
+                } else {
+                    handler?.also {
+                        it.removeCallbacksAndMessages(null)
+                    }
+
+                    handler = Handler(mainLooper).also {
+                        it.post(object : Runnable {
+                            override fun run() {
+                                showRestTimer(set)
+                                it.postDelayed(this, 1000)
                             }
-
-                            handler = Handler(mainLooper).also {
-                                it.post(object : Runnable {
-                                    override fun run() {
-                                        showRestTimer(set)
-                                        it.postDelayed(this, 1000)
-                                    }
-                                })
-                            }
-                        }
-                    }
-
-                    val adapter = WorkoutSetArrayAdapter(this, workoutFinished, sets)
-                    val list = findViewById<RecyclerView>(R.id.sets_list)
-                    list.adapter = adapter
-
-                    // Can not modify if workout is finished or workout route has been marked complete.
-                    if (isFinished) {
-                        findViewById<ImageButton>(R.id.take_photo).visibility = View.GONE
-                        findViewById<Button>(R.id.add_attempt).visibility = View.GONE
-                        findViewById<Button>(R.id.route_completed).visibility = View.GONE
-                    }
-
-                    findViewById<TextView>(R.id.title).also { v ->
-                        v.text = route.name
-                    }
-
-                    var difficultyText = "${difficulty.name} ${getString(R.string.difficulty).lowercase()}"
-
-                    // Grade is not mandatory.
-                    grade?.also { grade ->
-                        difficultyText = "$difficultyText (${grade.fontScale})"
-                    }
-
-                    findViewById<TextView>(R.id.difficulty).also { v ->
-                        v.text = difficultyText
-                        v.setTextColor(Color.parseColor("#${difficulty.hexColor}"))
+                        })
                     }
                 }
+            }
+
+            val adapter = WorkoutSetArrayAdapter(this, workoutFinished, sets)
+            val list = findViewById<RecyclerView>(R.id.sets_list)
+            list.adapter = adapter
+
+            // Can not modify if workout is finished or workout route has been marked complete.
+            if (isFinished) {
+                findViewById<ImageButton>(R.id.take_photo).visibility = View.GONE
+                findViewById<Button>(R.id.add_attempt).visibility = View.GONE
+                findViewById<Button>(R.id.route_completed).visibility = View.GONE
+            }
+
+            findViewById<TextView>(R.id.title).also { v ->
+                v.text = route.name
+            }
+
+            var difficultyText = "${difficulty.name} ${getString(R.string.difficulty).lowercase()}"
+
+            // Grade is not mandatory.
+            grade?.also { g ->
+                difficultyText = "$difficultyText (${g.fontScale})"
+            }
+
+            findViewById<TextView>(R.id.difficulty).also { v ->
+                v.text = difficultyText
+                v.setTextColor(Color.parseColor("#${difficulty.hexColor}"))
             }
         }
     }
