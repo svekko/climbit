@@ -1,6 +1,5 @@
 package com.example.climbit.activity
 
-import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Intent
 import android.graphics.*
@@ -21,7 +20,9 @@ import com.example.climbit.App
 import com.example.climbit.R
 import com.example.climbit.adapter.WorkoutSetArrayAdapter
 import com.example.climbit.livedata.PhotosDataModel
+import com.example.climbit.livedata.WorkoutRouteDataModel
 import com.example.climbit.model.HoldAnnotation
+import com.example.climbit.model.WorkoutRouteBundle
 import com.example.climbit.model.WorkoutSet
 import com.example.climbit.photo.WorkoutRoutePhoto
 import com.example.climbit.view.SwipeListener
@@ -40,7 +41,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
     private var workoutID: Long? = null
     private var takePhotoLauncher: ActivityResultLauncher<Uri>? = null
     private var photoPath: String? = null
-    private var isFinished = false
+    private var isFinished = true
     private var handler: Handler? = null
     private val annotations: MutableList<HoldAnnotation> = ArrayList()
     private val photosList: MutableList<WorkoutRoutePhoto> = ArrayList()
@@ -95,7 +96,6 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         super.onResume()
 
         initTakePhotoListener()
-        populateSetsListView()
 
         routeID?.also {
             PhotosDataModel(it).getPhotos().observe(this) { photos ->
@@ -103,6 +103,10 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                 photosList.addAll(photos)
 
                 loadPhotos()
+            }
+
+            WorkoutRouteDataModel(this, it).getWorkoutRoute().observe(this) { bundle ->
+                populateSetsListView(bundle)
             }
         }
     }
@@ -483,73 +487,58 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         timerTitle.text = titleText
     }
 
-    @SuppressLint("SetTextI18n")
-    private fun populateSetsListView() {
-        routeID?.also { routeID ->
-            val db = App.getDB(this)
-            val sets = db.workoutSetDAO().getAll(routeID)
-            val route = db.workoutRouteDAO().get(routeID)
-            val workout = db.workoutDAO().get(route.workoutID)
-            val lastSet = db.workoutSetDAO().getLastForWorkout(route.workoutID)
-            val difficulty = db.difficultyDAO().get(route.difficultyID)
-            val workoutFinished = workout.dateFinished != null
-            val grade = route.gradeID?.let { g ->
-                db.gradeDAO().get(g)
-            }
+    private fun populateSetsListView(bundle: WorkoutRouteBundle) {
+        val workoutFinished = bundle.workout.dateFinished != null
 
-            workoutID = route.workoutID
+        workoutID = bundle.route.workoutID
+        isFinished = workoutFinished || (bundle.sets.isNotEmpty() && bundle.sets[0].finished)
 
-            if (workoutFinished || (sets.isNotEmpty() && sets[0].finished)) {
-                isFinished = true
-            }
+        // Update rest timer every second.
+        bundle.lastSet?.also { set ->
+            if (isFinished) {
+                findViewById<TextView>(R.id.timer).visibility = View.GONE
+                findViewById<TextView>(R.id.timer_title).visibility = View.GONE
+            } else {
+                handler?.also {
+                    it.removeCallbacksAndMessages(null)
+                }
 
-            // Update rest timer every second.
-            lastSet?.also { set ->
-                if (isFinished) {
-                    findViewById<TextView>(R.id.timer).visibility = View.GONE
-                    findViewById<TextView>(R.id.timer_title).visibility = View.GONE
-                } else {
-                    handler?.also {
-                        it.removeCallbacksAndMessages(null)
-                    }
-
-                    handler = Handler(mainLooper).also {
-                        it.post(object : Runnable {
-                            override fun run() {
-                                showRestTimer(set)
-                                it.postDelayed(this, 1000)
-                            }
-                        })
-                    }
+                handler = Handler(mainLooper).also {
+                    it.post(object : Runnable {
+                        override fun run() {
+                            showRestTimer(set)
+                            it.postDelayed(this, 1000)
+                        }
+                    })
                 }
             }
+        }
 
-            val adapter = WorkoutSetArrayAdapter(this, workoutFinished, sets)
-            val list = findViewById<RecyclerView>(R.id.sets_list)
-            list.adapter = adapter
+        val adapter = WorkoutSetArrayAdapter(this, workoutFinished, bundle.sets)
+        val list = findViewById<RecyclerView>(R.id.sets_list)
+        list.adapter = adapter
 
-            // Can not modify if workout is finished or workout route has been marked complete.
-            if (isFinished) {
-                findViewById<ImageButton>(R.id.take_photo).visibility = View.GONE
-                findViewById<Button>(R.id.add_attempt).visibility = View.GONE
-                findViewById<Button>(R.id.route_completed).visibility = View.GONE
-            }
+        // Can not modify if workout is finished or workout route has been marked complete.
+        if (isFinished) {
+            findViewById<ImageButton>(R.id.take_photo).visibility = View.GONE
+            findViewById<Button>(R.id.add_attempt).visibility = View.GONE
+            findViewById<Button>(R.id.route_completed).visibility = View.GONE
+        }
 
-            findViewById<TextView>(R.id.title).also { v ->
-                v.text = route.name
-            }
+        findViewById<TextView>(R.id.title).also { v ->
+            v.text = bundle.route.name
+        }
 
-            var difficultyText = "${difficulty.name} ${getString(R.string.difficulty).lowercase()}"
+        var difficultyText = "${bundle.difficulty.name} ${getString(R.string.difficulty).lowercase()}"
 
-            // Grade is not mandatory.
-            grade?.also { g ->
-                difficultyText = "$difficultyText (${g.fontScale})"
-            }
+        // Grade is not mandatory.
+        bundle.grade?.also { g ->
+            difficultyText = "$difficultyText (${g.fontScale})"
+        }
 
-            findViewById<TextView>(R.id.difficulty).also { v ->
-                v.text = difficultyText
-                v.setTextColor(Color.parseColor("#${difficulty.hexColor}"))
-            }
+        findViewById<TextView>(R.id.difficulty).also { v ->
+            v.text = difficultyText
+            v.setTextColor(Color.parseColor("#${bundle.difficulty.hexColor}"))
         }
     }
 
