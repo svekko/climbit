@@ -268,13 +268,8 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             photoView.setScaleLevels(1F, 5F, 10F)
 
             bitmap.copy(bitmap.config, true).also { tmpBitmap ->
-                Executors.newSingleThreadExecutor().execute {
-                    drawAnnotations(tmpBitmap, photo)
-
-                    runOnUiThread {
-                        photoView.setImageBitmap(tmpBitmap)
-                    }
-                }
+                drawAnnotations(tmpBitmap, photo)
+                photoView.setImageBitmap(tmpBitmap)
             }
 
             val deleteButton = menuContentView.findViewById<TextView>(R.id.delete)
