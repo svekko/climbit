@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Intent
 import android.graphics.*
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -29,6 +28,7 @@ import com.example.climbit.model.WorkoutRouteBundle
 import com.example.climbit.model.WorkoutSet
 import com.example.climbit.photo.WorkoutRoutePhoto
 import com.example.climbit.view.SwipeListener
+import com.github.chrisbanes.photoview.OnPhotoTapListener
 import com.github.chrisbanes.photoview.PhotoView
 import java.io.File
 import java.io.IOException
@@ -271,6 +271,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         finalCanvas.drawBitmap(maskBitmap, 0F, 0F, maskPaint)
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun showPhotoFullScreen(index: Int, bitmap: Bitmap, wasEdited: Boolean) {
         photosList.getOrNull(index)?.also { photo ->
             val builder = AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
@@ -388,10 +389,10 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                     }
                 }
             } else {
-                photoView.setOnPhotoTapListener { _, w, h ->
+                val tapListener = OnPhotoTapListener { _, w, h ->
                     if (menuContentView.visibility == View.VISIBLE) {
                         menuContentView.visibility = View.GONE
-                        return@setOnPhotoTapListener
+                        return@OnPhotoTapListener
                     }
 
                     edited = true
@@ -448,6 +449,32 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                             }
                         }
                     }
+                }
+
+                var touchStartTime = 0L
+
+                photoView.setOnTouchListener { v, ev ->
+                    if (ev.action == MotionEvent.ACTION_DOWN) {
+                        touchStartTime = Date().time
+                    }
+
+                    val displayRect = photoView.displayRect
+
+                    if (displayRect != null && displayRect.contains(ev.x, ev.y) && ev.action == MotionEvent.ACTION_UP) {
+                        val x = (ev.x - displayRect.left) / displayRect.width()
+                        val y = (ev.y - displayRect.top) / displayRect.height()
+
+                        if (Date().time - touchStartTime < 100) {
+                            tapListener.onPhotoTap(v as ImageView, x, y)
+                            return@setOnTouchListener true
+                        }
+                    }
+
+                    photoView.attacher.onTouch(v, ev)
+                }
+
+                photoView.setOnPhotoTapListener { v, w, h ->
+                    tapListener.onPhotoTap(v, w, h)
                 }
             }
         }
