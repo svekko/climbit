@@ -22,6 +22,7 @@ class ShowWorkoutActivity : BaseActivity() {
     private var workout: Workout? = null
     private var routes: List<WorkoutRouteWithSets>? = null
     private var handler: Handler? = null
+    private var dialog: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +60,10 @@ class ShowWorkoutActivity : BaseActivity() {
     }
 
     override fun onResume() {
+        dialog?.also {
+            it.dismiss()
+        }
+
         super.onResume()
 
         workoutID?.also { workoutID ->
@@ -159,65 +164,64 @@ class ShowWorkoutActivity : BaseActivity() {
                 builder.setNegativeButton(R.string.cancel, null)
                 builder.setPositiveButton(R.string.confirm, null)
 
-                val dialog = builder.create()
-
-                dialog.setOnShowListener {
-                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                        val grade = (gradeSpinner.selectedItem as? Grade) ?: run {
-                            alertError("invalid grade")
-                            return@setOnClickListener
-                        }
-
-                        val difficulty = (difficultySpinner.selectedItem as? Difficulty) ?: run {
-                            alertError("invalid difficulty")
-                            return@setOnClickListener
-                        }
-
-                        var gradeID: Long? = null
-                        var difficultyID = difficulty.id
-
-                        // If selected, then grade selection overrides difficulty.
-                        if (grade.id > 0) {
-                            difficultyID = grade.difficultyID
-                            gradeID = grade.id
-                        }
-
-                        if (difficultyID < 1) {
-                            alertError("difficulty must be selected")
-                            return@setOnClickListener
-                        }
-
-                        val name = dialogView.findViewById<EditText>(R.id.name).text.toString().let {
-                            var out = it
-
-                            if (out.isEmpty()) {
-                                out = getString(R.string.route)
-
-                                routes?.let { routes ->
-                                    out = "$out #${routes.size + 1}"
-                                }
+                dialog = builder.create().also { dialog ->
+                    dialog.setOnShowListener {
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                            val grade = (gradeSpinner.selectedItem as? Grade) ?: run {
+                                alertError("invalid grade")
+                                return@setOnClickListener
                             }
 
-                            out
-                        }
+                            val difficulty = (difficultySpinner.selectedItem as? Difficulty) ?: run {
+                                alertError("invalid difficulty")
+                                return@setOnClickListener
+                            }
 
-                        workoutID?.also {
-                            Executors.newSingleThreadExecutor().execute {
-                                val route = WorkoutRoute(0, name, Date(), it, difficultyID, gradeID)
-                                val id = App.getDB(this).workoutRouteDAO().insert(route)
+                            var gradeID: Long? = null
+                            var difficultyID = difficulty.id
 
-                                runOnUiThread {
-                                    val intent = Intent(this, ShowWorkoutRouteActivity::class.java)
-                                    intent.putExtra("id", id)
-                                    startActivity(intent)
-                                    dialog.dismiss()
+                            // If selected, then grade selection overrides difficulty.
+                            if (grade.id > 0) {
+                                difficultyID = grade.difficultyID
+                                gradeID = grade.id
+                            }
+
+                            if (difficultyID < 1) {
+                                alertError("difficulty must be selected")
+                                return@setOnClickListener
+                            }
+
+                            val name = dialogView.findViewById<EditText>(R.id.name).text.toString().let {
+                                var out = it
+
+                                if (out.isEmpty()) {
+                                    out = getString(R.string.route)
+
+                                    routes?.let { routes ->
+                                        out = "$out #${routes.size + 1}"
+                                    }
+                                }
+
+                                out
+                            }
+
+                            workoutID?.also {
+                                Executors.newSingleThreadExecutor().execute {
+                                    val route = WorkoutRoute(0, name, Date(), it, difficultyID, gradeID)
+                                    val id = App.getDB(this).workoutRouteDAO().insert(route)
+
+                                    runOnUiThread {
+                                        val intent = Intent(this, ShowWorkoutRouteActivity::class.java)
+                                        intent.putExtra("id", id)
+                                        startActivity(intent)
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                dialog.show()
+                    dialog.show()
+                }
             }
         }
     }
