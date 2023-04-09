@@ -134,6 +134,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                 val index = count
                 val imgView = ImageView(this)
                 val cardView = CardView(this)
+                val deleteView = layoutInflater.inflate(R.layout.layout_item_delete, null)
 
                 val params = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -169,6 +170,24 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
                     photosView.addView(cardView)
                     imgView.startAnimation(animation)
+
+                    if (!isFinished) {
+                        imgView.setOnLongClickListener {
+                            cardView.removeAllViews()
+                            cardView.addView(deleteView)
+                            true
+                        }
+
+                        deleteView.findViewById<Button>(R.id.cancel).setOnClickListener {
+                            cardView.removeAllViews()
+                            cardView.addView(imgView)
+                        }
+
+                        deleteView.findViewById<Button>(R.id.delete).setOnClickListener {
+                            photo.file.delete()
+                            reloadActivity()
+                        }
+                    }
                 }
 
                 backgroundRunner.execute {
