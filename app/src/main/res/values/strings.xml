@@ -20,6 +20,7 @@
     <string name="image">Image</string>
     <string name="route">Route</string>
     <string name="take_photo">Take photo</string>
+    <string name="take_video">Take video</string>
     <string name="add_attempt">Add attempt</string>
     <string name="done_final_add_attempt">Done, add final attempt</string>
     <string name="complete">Complete</string>

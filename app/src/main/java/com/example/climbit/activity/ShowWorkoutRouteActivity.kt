@@ -43,6 +43,8 @@ class ShowWorkoutRouteActivity : BaseActivity() {
     private var routeID: Long? = null
     private var workoutID: Long? = null
     private var takePhotoLauncher: ActivityResultLauncher<Uri>? = null
+    private var takeVideoLauncher: ActivityResultLauncher<Uri>? = null
+    private var videoPath: String? = null
     private var photoPath: String? = null
     private var isFinished = true
     private var handler: Handler? = null
@@ -50,12 +52,14 @@ class ShowWorkoutRouteActivity : BaseActivity() {
     private val photosList: MutableList<WorkoutRoutePhoto> = ArrayList()
 
     override fun onDestroy() {
-        deleteTempPhotoOnPhotoPath(true)
+        deleteTempMediaOnPath(true, photoPath)
+        deleteTempMediaOnPath(true, videoPath)
+
         super.onDestroy()
     }
 
-    private fun deleteTempPhotoOnPhotoPath(tempFileOnly: Boolean) {
-        photoPath?.also { path ->
+    private fun deleteTempMediaOnPath(tempFileOnly: Boolean, mediaPath: String?) {
+        mediaPath?.also { path ->
             File(path).also { f ->
                 if (f.exists()) {
                     if (tempFileOnly && f.length() > 0L) {
@@ -68,20 +72,28 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         }
     }
 
+    private fun onMediaResult(result: Boolean) {
+        if (!result) {
+            // Capturing photo/video was cancelled.
+            // Remove temporary media file that was initially created.
+            deleteTempMediaOnPath(false, photoPath)
+            deleteTempMediaOnPath(false, videoPath)
+        }
+
+        reloadActivity()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_show_workout_route)
         routeID = intent.getLongExtra("id", 0)
 
         takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { result ->
-            if (!result) {
-                // Taking photo was cancelled.
-                // Remove temporary photo that was initially created.
-                deleteTempPhotoOnPhotoPath(false)
-                photoPath = null
-            }
+            onMediaResult(result)
+        }
 
-            reloadActivity()
+        takeVideoLauncher = registerForActivityResult(ActivityResultContracts.CaptureVideo()) { result ->
+            onMediaResult(result)
         }
 
         findViewById<Button>(R.id.add_attempt).setOnClickListener {
@@ -93,12 +105,13 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                 addWorkoutSet(true)
             }
         }
+
+        initTakePhotoListener()
+        initTakeVideoListener()
     }
 
     override fun onResume() {
         super.onResume()
-
-        initTakePhotoListener()
 
         routeID?.also {
             PhotosDataModel(it).getPhotos().observe(this) { photos ->
@@ -119,7 +132,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         startActivity(intent)
     }
 
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint("ClickableViewAccessibility", "InflateParams")
     private fun loadPhotos() {
         var count = 0
         val photosView = findViewById<LinearLayout>(R.id.images)
@@ -190,17 +203,32 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                     }
                 }
 
-                backgroundRunner.execute {
-                    val bitmapFullSize = photo.asBitmap()
+                if (photo.file.extension == "mp4") {
+                    imgView.setOnClickListener {
+                        val uri = FileProvider.getUriForFile(this, "com.example.android.fileprovider", photo.file)
+                        val intent = Intent();
 
-                    runOnUiThread {
-                        imgView.setOnClickListener {
-                            showPhotoFullScreen(index, bitmapFullSize, false)
+                        intent.action = Intent.ACTION_VIEW
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        intent.setDataAndType(uri, "video/*");
+
+                        startActivity(intent)
+                    }
+                } else {
+                    backgroundRunner.execute {
+                        val bitmapFullSize = photo.asBitmap()
+
+                        runOnUiThread {
+                            imgView.setOnClickListener {
+                                showPhotoFullScreen(index, bitmapFullSize, false)
+                            }
                         }
                     }
+
+                    drawAnnotations(bitmapThumbnail, photo)
                 }
 
-                drawAnnotations(bitmapThumbnail, photo)
                 count++
             }
 
@@ -499,32 +527,44 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         }
     }
 
-    private fun initTakePhotoListener() {
-        val photoFile = try {
-            createPhotoFile()
+    @Throws(IOException::class)
+    private fun createMediaFile(extension: String): File {
+        val timeStamp = DateFormat.format("yyyyMMdd_HHmmss", Date()).toString()
+        val dir = PhotosDataModel.getPhotosDir()
+
+        return File.createTempFile("${routeID}___${timeStamp}", ".$extension", dir)
+    }
+
+    private fun initMediaListener(extension: String, resID: Int, launcher: ActivityResultLauncher<Uri>?): File? {
+        val mediaFile = try {
+            createMediaFile(extension)
         } catch (ex: IOException) {
-            alertError("could not create image file")
+            alertError("could not create $extension file")
             null
         }
 
-        photoFile?.also { f ->
+        mediaFile?.also { f ->
             val uri = FileProvider.getUriForFile(this, "com.example.android.fileprovider", f)
 
-            findViewById<ImageButton>(R.id.take_photo).setOnClickListener {
-                takePhotoLauncher?.also { launcher ->
+            findViewById<ImageButton>(resID).setOnClickListener {
+                launcher?.also { launcher ->
                     launcher.launch(uri)
                 }
             }
         }
+
+        return mediaFile
     }
 
-    @Throws(IOException::class)
-    private fun createPhotoFile(): File {
-        val timeStamp = DateFormat.format("yyyyMMdd_HHmmss", Date()).toString()
-        val dir = PhotosDataModel.getPhotosDir()
-
-        return File.createTempFile("${routeID}___${timeStamp}", ".jpg", dir).also {
+    private fun initTakePhotoListener() {
+        initMediaListener("jpg", R.id.take_photo, takePhotoLauncher)?.also {
             photoPath = it.absolutePath
+        }
+    }
+
+    private fun initTakeVideoListener() {
+        initMediaListener("mp4", R.id.take_video, takeVideoLauncher)?.also {
+            videoPath = it.absolutePath
         }
     }
 

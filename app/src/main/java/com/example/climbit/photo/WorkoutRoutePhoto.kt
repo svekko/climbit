@@ -4,6 +4,8 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.media.ThumbnailUtils
+import android.util.Size
 import android.util.TypedValue
 import androidx.exifinterface.media.ExifInterface
 import java.io.File
@@ -25,7 +27,12 @@ class WorkoutRoutePhoto(val file: File) {
     }
 
     private fun loadPhoto(heightDp: Float?): Bitmap {
-        val bitmap = BitmapFactory.decodeFile(file.absolutePath)
+        val bitmap = if (file.extension == "mp4") {
+            ThumbnailUtils.createVideoThumbnail(file, Size(512, 512), null)
+        } else {
+            BitmapFactory.decodeFile(file.absolutePath)
+        }
+
         val orientation = ExifInterface(file).getAttributeInt(
             ExifInterface.TAG_ORIENTATION,
             ExifInterface.ORIENTATION_UNDEFINED
