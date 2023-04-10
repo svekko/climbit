@@ -621,6 +621,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         // Can not modify if workout is finished or workout route has been marked complete.
         if (isFinished) {
             findViewById<ImageButton>(R.id.take_photo).visibility = View.GONE
+            findViewById<ImageButton>(R.id.take_video).visibility = View.GONE
             findViewById<Button>(R.id.add_attempt).visibility = View.GONE
             findViewById<Button>(R.id.route_completed).visibility = View.GONE
         }
