@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -16,15 +17,30 @@
         android:layout_gravity="start|top"
         android:orientation="vertical">
 
-        <ImageView
+        <LinearLayout
             android:id="@+id/menu"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:alpha="0.8"
             android:background="@color/gray_800"
-            android:contentDescription="@string/menu"
-            android:padding="10dp"
-            android:src="@drawable/ic_menu" />
+            android:orientation="horizontal"
+            android:padding="10dp">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/menu"
+                android:src="@drawable/ic_menu" />
+
+            <TextView
+                android:id="@+id/edit_mode_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:text="E"
+                android:textColor="@color/white_200"
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/menu_content"
@@ -53,6 +69,16 @@
                 android:layout_marginVertical="5dp"
                 android:padding="10dp"
                 android:text="@string/open_externally"
+                android:textColor="@color/white_200"
+                android:textSize="8pt" />
+
+            <TextView
+                android:id="@+id/edit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="5dp"
+                android:padding="10dp"
+                android:text="@string/edit"
                 android:textColor="@color/white_200"
                 android:textSize="8pt" />
 

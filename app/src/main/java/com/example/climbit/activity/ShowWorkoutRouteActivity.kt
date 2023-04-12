@@ -221,7 +221,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
                         runOnUiThread {
                             imgView.setOnClickListener {
-                                showPhotoFullScreen(index, bitmapFullSize, false)
+                                showPhotoFullScreen(index, bitmapFullSize, false, !isFinished)
                             }
                         }
                     }
@@ -319,12 +319,12 @@ class ShowWorkoutRouteActivity : BaseActivity() {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun showPhotoFullScreen(index: Int, bitmap: Bitmap, wasEdited: Boolean) {
+    private fun showPhotoFullScreen(index: Int, bitmap: Bitmap, wasEdited: Boolean, editMode: Boolean) {
         photosList.getOrNull(index)?.also { photo ->
             val builder = AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
             val dialogView = layoutInflater.inflate(R.layout.dialog_image_enlarged, null, false)
             val photoView = dialogView.findViewById<PhotoView>(R.id.image)
-            val menuView = dialogView.findViewById<ImageView>(R.id.menu)
+            val menuView = dialogView.findViewById<LinearLayout>(R.id.menu)
             val menuContentView = dialogView.findViewById<LinearLayout>(R.id.menu_content)
             var edited = wasEdited
 
@@ -333,17 +333,6 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             bitmap.copy(bitmap.config, true).also { tmpBitmap ->
                 drawAnnotations(tmpBitmap, photo)
                 photoView.setImageBitmap(tmpBitmap)
-            }
-
-            val deleteButton = menuContentView.findViewById<TextView>(R.id.delete)
-
-            if (isFinished) {
-                deleteButton.visibility = View.GONE
-            } else {
-                deleteButton.setOnClickListener {
-                    photo.file.delete()
-                    reloadActivity()
-                }
             }
 
             menuView.setOnClickListener {
@@ -399,10 +388,33 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                 }
             }
 
+            val deleteButton = menuContentView.findViewById<TextView>(R.id.delete)
+            val editButton = menuContentView.findViewById<TextView>(R.id.edit)
+
+            if (isFinished) {
+                deleteButton.visibility = View.GONE
+            } else {
+                deleteButton.setOnClickListener {
+                    photo.file.delete()
+                    reloadActivity()
+                }
+            }
+
+            if (editMode) {
+                editButton.visibility = View.GONE
+            } else {
+                editButton.setOnClickListener {
+                    showPhotoFullScreen(index, photo.asBitmap(), edited, true)
+                    sleepAndDismissDialog.run()
+                }
+
+                menuView.findViewById<TextView>(R.id.edit_mode_badge).visibility = View.GONE
+            }
+
             // Right swipe - move to previous photo.
             swipeListener.onRightSwipe = Runnable {
                 photosList.getOrNull(index - 1)?.also { prevPhoto ->
-                    showPhotoFullScreen(index - 1, prevPhoto.asBitmap(), edited)
+                    showPhotoFullScreen(index - 1, prevPhoto.asBitmap(), edited, !isFinished)
                     sleepAndDismissDialog.run()
                 }
             }
@@ -410,7 +422,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
             // Left swipe - move to next photo.
             swipeListener.onLeftSwipe = Runnable {
                 photosList.getOrNull(index + 1)?.also { nextPhoto ->
-                    showPhotoFullScreen(index + 1, nextPhoto.asBitmap(), edited)
+                    showPhotoFullScreen(index + 1, nextPhoto.asBitmap(), edited, !isFinished)
                     sleepAndDismissDialog.run()
                 }
             }
@@ -435,7 +447,9 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                         menuContentView.visibility = View.GONE
                     }
                 }
-            } else {
+            }
+
+            if (editMode) {
                 val tapListener = OnPhotoTapListener { _, w, h ->
                     if (menuContentView.visibility == View.VISIBLE) {
                         menuContentView.visibility = View.GONE
