@@ -2,11 +2,11 @@ package com.example.climbit.activity
 
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.graphics.*
 import android.net.Uri
-import android.os.Bundle
-import android.os.Handler
+import android.os.*
 import android.text.format.DateFormat
 import android.view.MotionEvent
 import android.view.View
@@ -133,6 +133,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
     }
 
     @SuppressLint("ClickableViewAccessibility", "InflateParams")
+    @Suppress("Deprecation")
     private fun loadPhotos() {
         var count = 0
         val photosView = findViewById<LinearLayout>(R.id.images)
@@ -142,6 +143,12 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         photosView.removeAllViews()
 
         Executors.newSingleThreadExecutor().execute {
+            val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                (this.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+            } else {
+                this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            }
+
             for (photo in photosList) {
                 val bitmapThumbnail = photo.asBitmap(125.0F)
                 val index = count
@@ -188,6 +195,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                         imgView.setOnLongClickListener {
                             cardView.removeAllViews()
                             cardView.addView(deleteView)
+                            vibrator.vibrate(VibrationEffect.createOneShot(10, VibrationEffect.DEFAULT_AMPLITUDE))
                             true
                         }
 
