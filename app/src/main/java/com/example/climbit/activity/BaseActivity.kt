@@ -1,6 +1,11 @@
 package com.example.climbit.activity
 
+import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
@@ -9,7 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.climbit.R
 
 open class BaseActivity : AppCompatActivity() {
-    private var toast: Toast? = null;
+    private var toast: Toast? = null
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         if (this !is MainActivity) {
@@ -56,5 +61,27 @@ open class BaseActivity : AppCompatActivity() {
 
         val dialog = builder.create()
         dialog.show()
+    }
+
+    @Suppress("Deprecation")
+    fun getVibrator(): Vibrator {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (this.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+        } else {
+            this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+    }
+
+    fun vibrateShort(vibrator: Vibrator) {
+        vibrator.vibrate(VibrationEffect.createOneShot(10, VibrationEffect.DEFAULT_AMPLITUDE))
+    }
+
+    fun vibrateShort() {
+        vibrateShort(getVibrator())
+    }
+
+    fun reloadActivity() {
+        finish()
+        startActivity(intent)
     }
 }

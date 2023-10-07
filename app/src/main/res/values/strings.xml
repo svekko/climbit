@@ -41,6 +41,7 @@
     <string name="open_externally">Open externally</string>
     <string name="edit">Edit</string>
     <string name="toggle_mask">Toggle mask</string>
+    <string name="add_profile_image">Add profile image</string>
     <plurals name="n_attempts">
         <item quantity="one">%1$d attempt</item>
         <item quantity="other">%1$d attempts</item>

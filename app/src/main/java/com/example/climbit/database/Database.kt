@@ -15,11 +15,13 @@ import com.example.climbit.model.*
         Difficulty::class,
         Grade::class,
         HoldAnnotation::class,
+        Settings::class,
     ],
-    version = 3,
+    version = 4,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4),
     ]
 )
 @TypeConverters(Converters::class)
@@ -39,6 +41,7 @@ abstract class Database : RoomDatabase() {
     abstract fun difficultyDAO(): DifficultyDAO
     abstract fun gradeDAO(): GradeDAO
     abstract fun holdAnnotationDAO(): HoldAnnotationDAO
+    abstract fun settingsDAO(): SettingsDAO
 
     fun afterBuild() {
         if (difficultyDAO().getAll().isEmpty()) {
@@ -74,6 +77,10 @@ abstract class Database : RoomDatabase() {
             gradeDAO().insert(Grade(21, DIFF_ELITE, "8C"))
             gradeDAO().insert(Grade(22, DIFF_ELITE, "8C+"))
             gradeDAO().insert(Grade(23, DIFF_ELITE, "9A"))
+        }
+
+        if (!settingsDAO().exists()) {
+            settingsDAO().insert(Settings(1, null))
         }
     }
 }
