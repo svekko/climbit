@@ -38,6 +38,7 @@
 
         <Button
             android:id="@+id/add_route"
+            style="@style/DefaultButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/add_route"
@@ -45,6 +46,7 @@
 
         <Button
             android:id="@+id/finish"
+            style="@style/DefaultButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"

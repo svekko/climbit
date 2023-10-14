@@ -34,11 +34,11 @@
 
         <ImageButton
             android:id="@+id/delete"
+            style="@style/DeleteButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_marginStart="10dp"
-            android:backgroundTint="@color/red_400"
             android:contentDescription="@string/delete"
             android:src="@drawable/ic_delete" />
     </RelativeLayout>

@@ -20,6 +20,7 @@
 
         <Button
             android:id="@+id/load_more"
+            style="@style/DefaultButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/load_more" />

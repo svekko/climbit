@@ -2,19 +2,25 @@ package com.example.climbit.activity
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
+import android.os.*
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import com.example.climbit.R
 
 open class BaseActivity : AppCompatActivity() {
     private var toast: Toast? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val background = AppCompatResources.getDrawable(this, R.drawable.background)
+        findViewById<View>(android.R.id.content).background = background
+    }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         if (this !is MainActivity) {
