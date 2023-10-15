@@ -50,6 +50,11 @@ class ShowWorkoutRouteActivity : BaseActivity() {
     private val annotations: MutableList<HoldAnnotation> = ArrayList()
     private val photosList: MutableList<WorkoutRoutePhoto> = ArrayList()
 
+    companion object {
+        const val FILE_EXT_JPG = "jpg"
+        const val FILE_EXT_MP4 = "mp4"
+    }
+
     override fun onDestroy() {
         deleteTempMediaOnPath(true, photoPath)
         deleteTempMediaOnPath(true, videoPath)
@@ -410,17 +415,41 @@ class ShowWorkoutRouteActivity : BaseActivity() {
 
             // Right swipe - move to previous photo.
             swipeListener.onRightSwipe = Runnable {
-                photosList.getOrNull(index - 1)?.also { prevPhoto ->
-                    showPhotoFullScreen(index - 1, prevPhoto.asBitmap(), edited, !isFinished)
-                    sleepAndDismissDialog.run()
+                var exit = false
+                var i = 1
+
+                while (!exit) {
+                    photosList.getOrNull(index - i)?.let { prevPhoto ->
+                        if (prevPhoto.file.extension == FILE_EXT_JPG) {
+                            showPhotoFullScreen(index - i, prevPhoto.asBitmap(), edited, !isFinished)
+                            sleepAndDismissDialog.run()
+                            exit = true
+                        } else {
+                            i++
+                        }
+                    } ?: run {
+                        exit = true
+                    }
                 }
             }
 
             // Left swipe - move to next photo.
             swipeListener.onLeftSwipe = Runnable {
-                photosList.getOrNull(index + 1)?.also { nextPhoto ->
-                    showPhotoFullScreen(index + 1, nextPhoto.asBitmap(), edited, !isFinished)
-                    sleepAndDismissDialog.run()
+                var exit = false
+                var i = 1
+
+                while (!exit) {
+                    photosList.getOrNull(index + i)?.let { nextPhoto ->
+                        if (nextPhoto.file.extension == FILE_EXT_JPG) {
+                            showPhotoFullScreen(index + i, nextPhoto.asBitmap(), edited, !isFinished)
+                            sleepAndDismissDialog.run()
+                            exit = true
+                        } else {
+                            i++
+                        }
+                    } ?: run {
+                        exit = true
+                    }
                 }
             }
 
@@ -568,13 +597,13 @@ class ShowWorkoutRouteActivity : BaseActivity() {
     }
 
     private fun initTakePhotoListener() {
-        initMediaListener("jpg", R.id.take_photo, takePhotoLauncher)?.also {
+        initMediaListener(FILE_EXT_JPG, R.id.take_photo, takePhotoLauncher)?.also {
             photoPath = it.absolutePath
         }
     }
 
     private fun initTakeVideoListener() {
-        initMediaListener("mp4", R.id.take_video, takeVideoLauncher)?.also {
+        initMediaListener(FILE_EXT_MP4, R.id.take_video, takeVideoLauncher)?.also {
             videoPath = it.absolutePath
         }
     }
