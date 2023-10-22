@@ -1,8 +1,11 @@
 package com.example.climbit.activity
 
+import android.Manifest
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.widget.Button
+import androidx.activity.result.contract.ActivityResultContracts
 import com.example.climbit.App
 import com.example.climbit.R
 import java.util.concurrent.Executors
@@ -15,6 +18,49 @@ class MainActivity : BaseActivity() {
         findViewById<Button>(R.id.list_workouts).setOnClickListener {
             startActivity(Intent(this, ListWorkoutsActivity::class.java))
         }
+
+        checkPermissions()
+    }
+
+    private fun checkPermissions() {
+        val permissions = ArrayList<String>()
+
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+            permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+            permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.READ_MEDIA_VIDEO)
+            permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
+        }
+
+        if (permissions.size < 1) {
+            return
+        }
+
+        val launcher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { isGrantedMap ->
+            isGrantedMap.entries.forEach { isGranted ->
+                if (!isGranted.value) {
+                    alertError("permission is required: ${isGranted.key.split(".").last()}")
+
+                    findViewById<Button>(R.id.list_workouts).also {
+                        it.isEnabled = false
+                        it.alpha = 0.5F
+                    }
+
+                    findViewById<Button>(R.id.start_workout).also {
+                        it.isEnabled = false
+                        it.alpha = 0.5F
+                    }
+                }
+            }
+        }
+
+        launcher.launch(permissions.toTypedArray())
     }
 
     override fun onResume() {
