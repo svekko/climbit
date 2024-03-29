@@ -4,8 +4,10 @@ import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Intent
 import android.graphics.*
+import android.media.MediaScannerConnection
 import android.net.Uri
-import android.os.*
+import android.os.Bundle
+import android.os.Handler
 import android.text.format.DateFormat
 import android.view.MotionEvent
 import android.view.View
@@ -76,12 +78,16 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         }
     }
 
-    private fun onMediaResult(result: Boolean) {
+    private fun onMediaResult(result: Boolean, path: String?) {
         if (!result) {
             // Capturing photo/video was cancelled.
             // Remove temporary media file that was initially created.
             deleteTempMediaOnPath(false, photoPath)
             deleteTempMediaOnPath(false, videoPath)
+        } else {
+            path.also { p ->
+                MediaScannerConnection.scanFile(this, arrayOf(p), null, null)
+            }
         }
 
         reloadActivity()
@@ -93,11 +99,11 @@ class ShowWorkoutRouteActivity : BaseActivity() {
         routeID = intent.getLongExtra("id", 0)
 
         takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { result ->
-            onMediaResult(result)
+            onMediaResult(result, photoPath)
         }
 
         takeVideoLauncher = registerForActivityResult(ActivityResultContracts.CaptureVideo()) { result ->
-            onMediaResult(result)
+            onMediaResult(result, videoPath)
         }
 
         findViewById<Button>(R.id.add_attempt).setOnClickListener {
