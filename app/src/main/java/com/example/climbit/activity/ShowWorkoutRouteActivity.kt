@@ -211,7 +211,7 @@ class ShowWorkoutRouteActivity : BaseActivity() {
                     }
                 }
 
-                if (photo.file.extension == "mp4") {
+                if (photo.file.extension == FILE_EXT_MP4) {
                     imgView.setOnClickListener {
                         val uri = FileProvider.getUriForFile(this, "com.example.android.fileprovider", photo.file)
                         val intent = Intent();
